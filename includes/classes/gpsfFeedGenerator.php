@@ -744,33 +744,38 @@ class gpsfFeedGenerator
         return number_format($price, 2, '.', '') . ' ' . $this->currencyCode;
     }
 
-    // -----
-    // This method, renamed from googleProducts_get_category in the original, now caches
-    // the category information based on the master_categories_id as a performance
-    // enhancement.
-    //
-    protected function getCategoryInfo($master_categories_id)
-    {
-        if (isset($this->categoryInfoCache[$master_categories_id])) {
-            $category_names = $this->categoryInfoCache[$master_categories_id]['category_names'];
-            $cPath = $this->categoryInfoCache[$master_categories_id]['cPath'];
-        } else {
-            // build the cPath
-            $cPath_array = zen_generate_category_path($master_categories_id);
-            $category_names = [];
-            $cPath = [];
-            $cPath_array[0] = array_reverse($cPath_array[0]);
-            foreach ($cPath_array[0] as $category) {
-                $category_names[] = $category['text'];
-                $cPath[] = $category['id'];
-            }
-            $this->categoryInfoCache[$master_categories_id] = [
-                'category_names' => $category_names,
-                'cPath' => $cPath,
-            ];
-        }
-        return [$category_names, $cPath];
+// -----
+// Retrieves and caches category names and the category path.
+//
+protected function getCategoryInfo($master_categories_id): array
+{
+    $master_categories_id = (int)$master_categories_id;
+
+    if (isset($this->categoryInfoCache[$master_categories_id])) {
+        return [
+            $this->categoryInfoCache[$master_categories_id]['category_names'],
+            $this->categoryInfoCache[$master_categories_id]['cPath'],
+        ];
     }
+
+    $category_names = [];
+    $cPath = [];
+    $cPath_array = zen_generate_category_path($master_categories_id);
+
+    if (!empty($cPath_array[0]) && is_array($cPath_array[0])) {
+        foreach (array_reverse($cPath_array[0]) as $category) {
+            $category_names[] = $category['text'];
+            $cPath[] = $category['id'];
+        }
+    }
+
+    $this->categoryInfoCache[$master_categories_id] = [
+        'category_names' => $category_names,
+        'cPath' => $cPath,
+    ];
+
+    return [$category_names, $cPath];
+}
 
     // -----
     // Create a product's "base" feed information (no attributes).  Previously named create_regular_product
