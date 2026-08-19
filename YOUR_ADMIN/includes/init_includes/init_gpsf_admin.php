@@ -1,38 +1,55 @@
 <?php
 // -----
-// An initialization script to install the Google Product Search Feeder II.
+// An initialization script to install the Red Headed Stepchild of Zen Cart® Google Product Search Feeder II.
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: v1.0.9
+// Last updated: Reimagined Release v1.0.3
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
-define('GPSF_CURRENT_VERSION', '1.0.9');
+define('GPSF_CURRENT_VERSION', '1.0.5');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.3');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
 // and at the current version.
 //
-if (empty($_SESSION['admin_id']) || (defined('GPSF_VERSION') && GPSF_VERSION === GPSF_CURRENT_VERSION)) {
+if (empty($_SESSION['admin_id']) || (defined('GPSF_VERSION') && GPSF_VERSION === GPSF_CURRENT_VERSION && defined('RHS_GPSF_VERSION') && RHS_GPSF_VERSION === RHS_GPSF_CURRENT_VERSION)) {
     return;
 }
 
-$configurationGroupTitle = 'Google Product Search Feeder II';
-$configuration = $db->Execute("SELECT configuration_group_id FROM " . TABLE_CONFIGURATION_GROUP . " WHERE configuration_group_title = '$configurationGroupTitle' LIMIT 1");
+$configurationGroupTitle = 'Red Headed Stepchild of Zen Cart® Google Product Search Feeder II';
+$legacyConfigurationGroupTitle = 'Google Product Search Feeder II';
+$configuration = $db->Execute(
+    "SELECT configuration_group_id, configuration_group_title
+       FROM " . TABLE_CONFIGURATION_GROUP . "
+      WHERE configuration_group_title IN ('$configurationGroupTitle', '$legacyConfigurationGroupTitle')
+      ORDER BY configuration_group_title = '$configurationGroupTitle' DESC
+      LIMIT 1"
+);
 if ($configuration->EOF) {
     $db->Execute(
         "INSERT INTO " . TABLE_CONFIGURATION_GROUP . " 
             (configuration_group_title, configuration_group_description, sort_order, visible) 
          VALUES 
-            ('$configurationGroupTitle', 'Set Google Product Search Feeder II Options', 1, 1)"
+            ('$configurationGroupTitle', 'Set Red Headed Stepchild of Zen Cart® Google Product Search Feeder II Options', 1, 1)"
     );
     $cgi = $db->Insert_ID(); 
     $db->Execute("UPDATE " . TABLE_CONFIGURATION_GROUP . " SET sort_order = $cgi WHERE configuration_group_id = $cgi LIMIT 1");
 } else {
     $cgi = $configuration->fields['configuration_group_id'];
+    if ($configuration->fields['configuration_group_title'] !== $configurationGroupTitle) {
+        $db->Execute(
+            "UPDATE " . TABLE_CONFIGURATION_GROUP . "
+                SET configuration_group_title = '$configurationGroupTitle',
+                    configuration_group_description = 'Set Red Headed Stepchild of Zen Cart® Google Product Search Feeder II Options'
+              WHERE configuration_group_id = $cgi
+              LIMIT 1"
+        );
+    }
 }
 
 if (!defined('GPSF_VERSION')) {
@@ -40,7 +57,8 @@ if (!defined('GPSF_VERSION')) {
         "INSERT INTO " . TABLE_CONFIGURATION . "
             (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function) 
          VALUES
-            ('Version', 'GPSF_VERSION', '0.0.0', 'Version Installed:', $cgi, 0, now(), NULL, 'zen_cfg_read_only('),
+            ('Upstream Version', 'GPSF_VERSION', '0.0.0', 'Google Product Search Feeder II foundation:', $cgi, 0, now(), NULL, 'zen_cfg_read_only('),
+            ('Reimagined Release', 'RHS_GPSF_VERSION', '0.0.0', 'Red Headed Stepchild release installed:', $cgi, 1, now(), NULL, 'zen_cfg_read_only('),
 
             ('Enable?', 'GPSF_ENABLED', 'false', '<br>Enable the generation of the feed?', $cgi, 1, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
@@ -161,10 +179,28 @@ if (!defined('GPSF_VERSION')) {
     // Let the logged-in admin know that the plugin's been installed.
     //
     define('GPSF_VERSION', '0.0.0');
+    define('RHS_GPSF_VERSION', '0.0.0');
+}
+
+if (!defined('RHS_GPSF_VERSION')) {
+    $rhsVersion = match (GPSF_VERSION) {
+        '1.0.6' => '1.0.0',
+        '1.0.7' => '1.0.1',
+        '1.0.8' => '1.0.2',
+        '1.0.9' => '1.0.3',
+        default => '0.0.0',
+    };
+    $db->Execute(
+        "INSERT INTO " . TABLE_CONFIGURATION . "
+            (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+         VALUES
+            ('Reimagined Release', 'RHS_GPSF_VERSION', '$rhsVersion', 'Red Headed Stepchild release installed:', $cgi, 1, now(), NULL, 'zen_cfg_read_only(')"
+    );
+    define('RHS_GPSF_VERSION', $rhsVersion);
 }
 
 // -----
-// Version-specific database adjustments.
+// Upstream version-specific database adjustments.
 //
 switch (true) {
     case version_compare(GPSF_VERSION, '1.0.0', '<'):
@@ -186,7 +222,13 @@ switch (true) {
               WHERE configuration_key = 'GPSF_SHIPPING_METHOD'
               LIMIT 1"
         );
-    case version_compare(GPSF_VERSION, '1.0.6', '<'):           //-Fall through from above processing ...
+}
+
+$installedReimaginedVersion = RHS_GPSF_VERSION;
+
+// Reimagined Release database adjustments.
+switch (true) {
+    case version_compare($installedReimaginedVersion, '1.0.0', '<'):           //-Fall through from above processing ...
         $output_format = $db->Execute(
             "SELECT configuration_id
                FROM " . TABLE_CONFIGURATION . "
@@ -201,7 +243,7 @@ switch (true) {
                     ('Feed Output Format', 'GPSF_OUTPUT_FORMAT', 'xml', '<br>Generate an XML feed or a tab-delimited TXT feed. Default: <code>xml</code>.', $cgi, 53, now(), NULL, 'zen_cfg_select_option([\\'xml\\', \\'txt\\'],')"
             );
         }
-    case version_compare(GPSF_VERSION, '1.0.7', '<'):           //-Fall through from above processing ...
+    case version_compare($installedReimaginedVersion, '1.0.1', '<'):           //-Fall through from above processing ...
         $shipping_weight_increase = $db->Execute(
             "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'GPSF_SHIPPING_WEIGHT_INCREASE' LIMIT 1"
         );
@@ -235,7 +277,7 @@ switch (true) {
                     ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br>Products-table column containing each product\'s Google product category. Default: <code>products_google_product_category</code>.', $cgi, 424, now(), NULL, NULL)"
             );
         }
-    case version_compare(GPSF_VERSION, '1.0.8', '<'):           //-Fall through from above processing ...
+    case version_compare($installedReimaginedVersion, '1.0.2', '<'):           //-Fall through from above processing ...
         $default_shipping_weight = $db->Execute(
             "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'GPSF_DEFAULT_SHIPPING_WEIGHT' LIMIT 1"
         );
@@ -254,7 +296,7 @@ switch (true) {
               WHERE configuration_key = 'GPSF_SHIPPING_WEIGHT_INCREASE'
               LIMIT 1"
         );
-    case version_compare(GPSF_VERSION, '1.0.9', '<'):           //-Fall through from above processing ...
+    case version_compare($installedReimaginedVersion, '1.0.3', '<'):           //-Fall through from above processing ...
         $product_field_settings = [
             ['Material Product Field', 'GPSF_PRODUCT_FIELD_MATERIAL', 'products_material', '<br>Install an optional Material entry on the admin product page. Populated values are exported as <code>material</code>.', 430],
             ['Age Group Product Field', 'GPSF_PRODUCT_FIELD_AGE_GROUP', 'products_age_group', '<br>Install an optional Age Group entry on the admin product page. Populated values are exported as <code>age_group</code>.', 432],
@@ -283,5 +325,12 @@ $db->Execute(
     "UPDATE " . TABLE_CONFIGURATION . "
         SET configuration_value = '" . GPSF_CURRENT_VERSION . "'
       WHERE configuration_key = 'GPSF_VERSION'
+      LIMIT 1"
+);
+
+$db->Execute(
+    "UPDATE " . TABLE_CONFIGURATION . "
+        SET configuration_value = '" . RHS_GPSF_CURRENT_VERSION . "'
+      WHERE configuration_key = 'RHS_GPSF_VERSION'
       LIMIT 1"
 );
