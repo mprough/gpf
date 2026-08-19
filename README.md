@@ -26,16 +26,16 @@ The optional product columns described below are not created automatically durin
 
 ## Admin locations
 
-- **Configuration > Google Product Search Feeder II** — feeder settings and optional-field installation
-- **Tools > Google Product Search Feeder II** — generate, inspect, and manage feeds
-- **Catalog > Categories/Products** — edit installed per-product Google fields
+- **Configuration > Google Product Search Feeder II**: feeder settings and optional-field installation
+- **Tools > Google Product Search Feeder II**: generate, inspect, and manage feeds
+- **Catalog > Categories/Products**: edit installed per-product Google fields
 
 ## Feed formats
 
 Set **Feed Output Format** to either:
 
-- **XML** — the traditional Google RSS/XML feed
-- **TXT** — a UTF-8, tab-delimited Google product feed with a header row
+- **XML**: the traditional Google RSS/XML feed
+- **TXT**: a UTF-8, tab-delimited Google product feed with a header row
 
 TXT generation discovers the attributes actually emitted by the products and writes only columns that contain at least one value. This also preserves attributes added by compatible feeder extensions. Repeated values are comma-delimited, and structured values use colon-delimited subfields in accordance with Google text-feed conventions.
 
@@ -93,7 +93,7 @@ Replace the domain, key, and language with the store's values. Protect the feed 
 
 ## Version history
 
-### 1.0.9 — 2026-08-19
+### 1.0.9, 2026-08-19
 
 - Added Zen Cart 2.2.2 and PHP 8.5 compatibility
 - Added independent installation controls for `material`, `age_group`, `color`, and `gender`
@@ -120,33 +120,33 @@ Replace the domain, key, and language with the store's values. Protect the feed 
 - Added text-feed serialization for repeated and structured values
 - Updated filenames, gzip output, and feed locking for the selected format
 
-### 1.0.5 — 2025-07-23
+### 1.0.5, 2025-07-23
 
 - Updated Merchant Center shipping-related output
 - Updated availability values to Google's underscore format
 - Improved `shipping_weight` selection and fallback behavior
 - Added warnings for relevant zone configuration issues
 
-### 1.0.4 — 2024-07-19
+### 1.0.4, 2024-07-19
 
 - Corrected extension-class error handling and title-method processing
 - Added compatibility updates for Zen Cart's plugin infrastructure
 
-### 1.0.3 — 2024-06-21
+### 1.0.3, 2024-06-21
 
 - Added warnings for missing joined product records instead of allowing silent feed failures
 
-### 1.0.2 — 2024-04-06
+### 1.0.2, 2024-04-06
 
 - Corrected availability-date processing that could cause a fatal error
 - Corrected category-list handling to use product master categories
 
-### 1.0.1 — 2024-02-29
+### 1.0.1, 2024-02-29
 
 - Corrected product title, availability, product-type delimiter, language, multibyte text, extension, parameter, timer, and product-type processing
 - Added legacy admin-head compatibility updates
 
-### 1.0.0 — 2023-11-13
+### 1.0.0, 2023-11-13
 
 - Initial release of the updated Google Product Search Feeder II
 
