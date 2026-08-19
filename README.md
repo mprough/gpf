@@ -157,4 +157,10 @@ Replace the domain, key, and language with the store's values. Protect the feed 
 - [Zen Cart support thread](https://www.zen-cart.com/showthread.php?229785-Google-Product-Search-Feeder-II-Support-Thread)
 - [Zen Cart plugin download](https://www.zen-cart.com/downloads.php?do=file&id=2379)
 
+## Credits
+
+- Original Google Merchant Center Feeder by Numinix
+- Google Product Search Feeder II update by lat9 and contributors
+- v1.0.6-v1.0.9 modifications by [PRO-Webs, Inc.](https://PRO-Webs.net), Melanie Prough
+
 Zen Cart&reg; is a registered trademark of Zen Ventures, LLC. Google and Google Merchant Center are trademarks of Google LLC.

@@ -2,6 +2,7 @@
 // -----
 // A base class for optional extensions to the Google Product Search Feeder II for Zen Carts 1.5.6b and later.
 // Copyright (C) 2023-2026, https://vinosdefrutastropicales.com
+// Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
 // Last updated: v1.0.9
 //
