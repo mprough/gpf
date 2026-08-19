@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.6
+// Last updated: Reimagined Release v1.0.7
 //
 /**
  * Based on:
@@ -115,7 +115,11 @@ function gpsf_custom_product_field_install_control($slot, $column, $key = ''): s
             'securityToken' => $_SESSION['securityToken'],
         ]
     );
-    $installUrl = zen_href_link(FILENAME_GPSF_ADMIN, $parameters) . '&column=';
+    $installUrl = html_entity_decode(
+        zen_href_link(FILENAME_GPSF_ADMIN, $parameters),
+        ENT_QUOTES,
+        CHARSET
+    ) . '&column=';
     $onclick = 'window.location.href=' . json_encode($installUrl) .
         '+encodeURIComponent(document.getElementById(' . json_encode($inputId) . ').value);';
 
