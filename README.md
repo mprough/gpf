@@ -1,6 +1,6 @@
-# Zen Cart&reg; Google Product Search Feeder II, v1.0.9
+# Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.3
 
-Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This fork updates the Numinix feeder for current Zen Cart releases. Version 1.0.9 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
+Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This independent fork is based on Google Product Search Feeder II v1.0.5 and updates it for current Zen Cart releases. Reimagined Release v1.0.3 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
 
 ## Features
 
@@ -18,7 +18,7 @@ Google Product Search Feeder II generates Google Merchant Center product feeds f
 2. Rename the package's `YOUR_ADMIN` directory to match the store's admin directory.
 3. Upload the package files while preserving their directory structure. Make sure both the catalog-side generator files and admin files are updated.
 4. Sign out of Zen Cart admin, then sign back in. The feeder's non-destructive database upgrade runs during admin initialization.
-5. Open **Configuration > Google Product Search Feeder II** and confirm that the installed version is `1.0.9`.
+5. Open **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** and confirm that the installed Reimagined Release is `1.0.3`.
 
 When upgrading, do not copy only the admin files. Feed generation runs from catalog-side files such as `includes/classes/gpsfFeedGenerator.php`, so an incomplete upload can show the new version in admin while continuing to generate an older feed.
 
@@ -26,8 +26,8 @@ The optional product columns described below are not created automatically durin
 
 ## Admin locations
 
-- **Configuration > Google Product Search Feeder II**: feeder settings and optional-field installation
-- **Tools > Google Product Search Feeder II**: generate, inspect, and manage feeds
+- **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II**: feeder settings and optional-field installation
+- **Tools > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II**: generate, inspect, and manage feeds
 - **Catalog > Categories/Products**: edit installed per-product Google fields
 
 ## Feed formats
@@ -68,7 +68,7 @@ The generated value uses the store's configured weight unit. These settings affe
 
 ## Optional product fields
 
-Version 1.0.9 can add four independent fields to the products table and Zen Cart admin product editor. In **Configuration > Google Product Search Feeder II**, click the individual **Install** control for each field the store needs.
+Reimagined Release v1.0.3 can add four independent fields to the products table and Zen Cart admin product editor. In **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II**, click the individual **Install** control for each field the store needs.
 
 | Feed attribute | Products-table column | Database type | Admin input |
 | --- | --- | --- | --- |
@@ -83,7 +83,7 @@ Only non-empty values are exported. A value already provided by product attribut
 
 ## Generating a feed
 
-Use **Tools > Google Product Search Feeder II** to generate a feed interactively. Scheduled generation can call the catalog feed endpoint with the configured key and other supported parameters. A typical command is:
+Use **Tools > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** to generate a feed interactively. Scheduled generation can call the catalog feed endpoint with the configured key and other supported parameters. A typical command is:
 
 ```sh
 wget -q -O /dev/null "https://example.com/index.php?main_page=google_product_feed&feed=yes&key=YOUR_KEY&language=en"
@@ -93,7 +93,7 @@ Replace the domain, key, and language with the store's values. Protect the feed 
 
 ## Version history
 
-### 1.0.9, 2026-08-19
+### Reimagined Release v1.0.3, 2026-08-19
 
 - Added Zen Cart 2.2.2 and PHP 8.5 compatibility
 - Added independent installation controls for `material`, `age_group`, `color`, and `gender`
@@ -101,54 +101,29 @@ Replace the domain, key, and language with the store's values. Protect the feed 
 - Added the installed database values to XML and TXT feeds when populated
 - Preserved higher-priority values supplied by product attributes or feed extensions
 
-### 1.0.8
+### Reimagined Release v1.0.2
 
 - Added **Default Shipping Weight** for products with no positive catalog weight
 - Applied the configured percentage increase after selecting either the product weight or default weight
 - Omitted `shipping_weight` when no positive base weight exists
 
-### 1.0.7
+### Reimagined Release v1.0.1
 
 - Added `shipping_weight` based on product weight plus a configurable percentage increase, defaulting to 3%
 - Added a configurable products-table column for per-product Google product categories
 - Added fallback to the store-wide default category when the product column is empty
 
-### 1.0.6
+### Reimagined Release v1.0.0
 
 - Added tab-delimited TXT feed output alongside XML
 - Added dynamic TXT headers and support for extension-provided attributes
 - Added text-feed serialization for repeated and structured values
 - Updated filenames, gzip output, and feed locking for the selected format
 
-### 1.0.5, 2025-07-23
+### Upstream foundation: Google Product Search Feeder II v1.0.5
 
-- Updated Merchant Center shipping-related output
-- Updated availability values to Google's underscore format
-- Improved `shipping_weight` selection and fallback behavior
-- Added warnings for relevant zone configuration issues
-
-### 1.0.4, 2024-07-19
-
-- Corrected extension-class error handling and title-method processing
-- Added compatibility updates for Zen Cart's plugin infrastructure
-
-### 1.0.3, 2024-06-21
-
-- Added warnings for missing joined product records instead of allowing silent feed failures
-
-### 1.0.2, 2024-04-06
-
-- Corrected availability-date processing that could cause a fatal error
-- Corrected category-list handling to use product master categories
-
-### 1.0.1, 2024-02-29
-
-- Corrected product title, availability, product-type delimiter, language, multibyte text, extension, parameter, timer, and product-type processing
-- Added legacy admin-head compatibility updates
-
-### 1.0.0, 2023-11-13
-
-- Initial release of the updated Google Product Search Feeder II
+- The reimagined release began with the upstream v1.0.5 codebase
+- Earlier upstream history remains available from the original project and support resources
 
 ## Documentation and support
 
@@ -160,7 +135,7 @@ Replace the domain, key, and language with the store's values. Protect the feed 
 ## Credits
 
 - Original Google Merchant Center Feeder by Numinix
-- Google Product Search Feeder II update by lat9 and contributors
-- v1.0.6-v1.0.9 modifications by [PRO-Webs, Inc.](https://PRO-Webs.net), Melanie Prough
+- Red Headed Stepchild of Zen Cart® Google Product Search Feeder II update by lat9 and contributors
+- Reimagined Releases v1.0.0-v1.0.3 developed by [PRO-Webs, Inc.](https://PRO-Webs.net), Melanie Prough
 
 Zen Cart&reg; is a registered trademark of Zen Ventures, LLC. Google and Google Merchant Center are trademarks of Google LLC.
