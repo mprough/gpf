@@ -104,7 +104,8 @@ if ($query_limit > 0) {
 if ($query_offset > 0) {
     $outfile .= '_' . $query_offset;
 }
-$outfile .= '.xml'; //example domain_products.xml
+$output_format = (defined('GPSF_OUTPUT_FORMAT') && GPSF_OUTPUT_FORMAT === 'txt') ? 'txt' : 'xml';
+$outfile .= '.' . $output_format; // example: domain_products_en.xml or domain_products_en.txt
 
 ob_start();
 echo '<p>' . sprintf(TEXT_GPSF_STARTED, GPSF_VERSION) . '</p>';

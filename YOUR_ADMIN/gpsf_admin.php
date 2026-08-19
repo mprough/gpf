@@ -306,8 +306,8 @@ if ($feed_files === []) {
                 jQuery.get('<?= zen_href_link(FILENAME_GPSF_ADMIN) ?>', function(data2) {
                     var availableDownloads = jQuery(data2).find('#feed-files').html();
                     jQuery('#feed-files').html(availableDownloads);
-                    if (availableDownloads.indexOf('.xml.lock') >= 0) {
-                        lockMessage = '<p class="text-danger">Since an .xml.lock file is present, the feed might have run out of either memory or time.  Check your <code>/logs</code> directory for details.</p>';
+                    if (availableDownloads.indexOf('.xml.lock') >= 0 || availableDownloads.indexOf('.txt.lock') >= 0) {
+                        lockMessage = '<p class="text-danger">Since a feed lock file is present, the feed might have run out of either memory or time.  Check your <code>/logs</code> directory for details.</p>';
                     }
                 });
                 jQuery('#feed-text').hide();
