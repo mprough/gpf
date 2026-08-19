@@ -109,7 +109,8 @@ $output_format = (defined('GPSF_OUTPUT_FORMAT') && GPSF_OUTPUT_FORMAT === 'txt')
 $outfile .= '.' . $output_format; // example: domain_products_en.xml or domain_products_en.txt
 
 ob_start();
-echo '<p>' . sprintf(TEXT_GPSF_STARTED, RHS_GPSF_VERSION) . '</p>';
+$reimaginedVersion = defined('RHS_GPSF_VERSION') ? RHS_GPSF_VERSION : '1.0.3';
+echo '<p>' . sprintf(TEXT_GPSF_STARTED, $reimaginedVersion) . '</p>';
 echo '<p>' . TEXT_GPSF_FILE_LOCATION . $outfile . '</p>';
 echo '<p>Processing: Feed - ' . ($feed === 'yes' ? 'Yes' : 'No') . '</p>';
 echo '<p>PHP Memory Limit: ' . ini_get('memory_limit') . '</p>';
