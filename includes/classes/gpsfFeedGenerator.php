@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.4
+// Last updated: Reimagined Release v1.0.5
 //
 /**
  * Based on:
@@ -587,14 +587,14 @@ class gpsfFeedGenerator
                 $custom_fields = $this->getExtensionsAttributes($products_id, $product, $custom_fields);
             }
             foreach (
-                [
+                array_merge([
                     'products_material' => 'material',
                     'products_age_group' => 'age_group',
                     'products_color' => 'color',
                     'products_gender' => 'gender',
-                ] as $database_field => $feed_field
+                ], $this->getConfiguredCustomProductFields()) as $database_field => $feed_field
             ) {
-                if (!array_key_exists($feed_field, $custom_fields) && !empty($product[$database_field])) {
+                if (!array_key_exists($feed_field, $custom_fields) && isset($product[$database_field]) && trim((string)$product[$database_field]) !== '') {
                     $custom_fields[$feed_field] = $this->sanitizeXml($product[$database_field]);
                 }
             }
@@ -864,6 +864,13 @@ class gpsfFeedGenerator
 
         foreach (['products_material', 'products_age_group', 'products_color', 'products_gender'] as $next_field) {
             $field_name = 'p.' . $next_field;
+            if (strpos($additional_fields, $field_name) === false && $sniffer->field_exists(TABLE_PRODUCTS, $next_field)) {
+                $additional_fields .= ', ' . $field_name;
+            }
+        }
+
+        foreach ($this->getConfiguredCustomProductFields() as $next_field => $feed_field) {
+            $field_name = 'p.`' . $next_field . '`';
             if (strpos($additional_fields, $field_name) === false && $sniffer->field_exists(TABLE_PRODUCTS, $next_field)) {
                 $additional_fields .= ', ' . $field_name;
             }
@@ -1457,6 +1464,22 @@ protected function getCategoryInfo($master_categories_id): array
 
         unset($this->xmlWriter);
         $this->reportProgress(true);
+    }
+
+    protected function getConfiguredCustomProductFields()
+    {
+        $fields = [];
+        for ($slot = 1; $slot <= 5; $slot++) {
+            $configurationKey = 'GPSF_CUSTOM_PRODUCT_FIELD_' . $slot;
+            if (!defined($configurationKey)) {
+                continue;
+            }
+            $column = trim((string)constant($configurationKey));
+            if (preg_match('/^[a-z][a-z0-9_]{0,63}$/', $column) === 1 && stripos($column, 'xml') !== 0) {
+                $fields[$column] = $column;
+            }
+        }
+        return $fields;
     }
 
 // SHIPPING FUNCTIONS //

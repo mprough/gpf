@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.4
+// Last updated: Reimagined Release v1.0.5
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.4');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.5');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -137,6 +137,16 @@ if (!defined('GPSF_VERSION')) {
             ('Color Product Field', 'GPSF_PRODUCT_FIELD_COLOR', 'products_color', '<br>Install an optional Color entry on the admin product page. Populated values are exported as <code>color</code>.', $cgi, 434, now(), NULL, 'gpsf_product_field_install_control('),
 
             ('Gender Product Field', 'GPSF_PRODUCT_FIELD_GENDER', 'products_gender', '<br>Install an optional Gender entry on the admin product page. Populated values are exported as <code>gender</code>.', $cgi, 436, now(), NULL, 'gpsf_product_field_install_control('),
+
+            ('Custom Product Field 1', 'GPSF_CUSTOM_PRODUCT_FIELD_1', '', '<br>Enter a lowercase database and feed column, such as <code>vehicle_type</code>, then click Install. The field appears on the admin product page and populated values are exported under the same name.', $cgi, 440, now(), NULL, 'gpsf_custom_product_field_install_control('),
+
+            ('Custom Product Field 2', 'GPSF_CUSTOM_PRODUCT_FIELD_2', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 442, now(), NULL, 'gpsf_custom_product_field_install_control('),
+
+            ('Custom Product Field 3', 'GPSF_CUSTOM_PRODUCT_FIELD_3', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 444, now(), NULL, 'gpsf_custom_product_field_install_control('),
+
+            ('Custom Product Field 4', 'GPSF_CUSTOM_PRODUCT_FIELD_4', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 446, now(), NULL, 'gpsf_custom_product_field_install_control('),
+
+            ('Custom Product Field 5', 'GPSF_CUSTOM_PRODUCT_FIELD_5', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 448, now(), NULL, 'gpsf_custom_product_field_install_control('),
 
             ('Display Tax', 'GPSF_TAX_DISPLAY', 'false', '<br>Display tax per product? (US only)? Default: <em>false</em>.', $cgi, 500, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
@@ -319,6 +329,25 @@ switch (true) {
         }
     case version_compare($installedReimaginedVersion, '1.0.4', '<'):           //-Fall through from above processing ...
         // Reimagined Release v1.0.4 adds file-based heartbeat reporting and requires no database changes.
+    case version_compare($installedReimaginedVersion, '1.0.5', '<'):           //-Fall through from above processing ...
+        for ($slot = 1; $slot <= 5; $slot++) {
+            $configurationKey = 'GPSF_CUSTOM_PRODUCT_FIELD_' . $slot;
+            $settingExists = $db->Execute(
+                "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = '$configurationKey' LIMIT 1"
+            );
+            if (!$settingExists->EOF) {
+                continue;
+            }
+            $description = ($slot === 1)
+                ? '<br>Enter a lowercase database and feed column, such as <code>vehicle_type</code>, then click Install. The field appears on the admin product page and populated values are exported under the same name.'
+                : '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.';
+            $db->Execute(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                 VALUES
+                    ('Custom Product Field $slot', '$configurationKey', '', '$description', $cgi, " . (438 + ($slot * 2)) . ", now(), NULL, 'gpsf_custom_product_field_install_control(')"
+            );
+        }
     default:                                                    //-Fall through from above processing ...
         break;
 }

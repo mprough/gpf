@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.4
+// Last updated: Reimagined Release v1.0.5
 //
 /**
  * Based on:
@@ -40,6 +40,37 @@ if (isset($_GET['action']) && $_GET['action'] === 'install_product_field') {
             zen_record_admin_activity('Installed Google feed product field ' . $definition['column'] . '.', 'info');
         }
         $messageStack->add_session($definition['label'] . ' product field installed.', 'success');
+    }
+    $gID = (int)($_GET['gID'] ?? 0);
+    zen_redirect(zen_href_link(FILENAME_CONFIGURATION, 'gID=' . $gID));
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'install_custom_product_field') {
+    $slot = (int)($_GET['slot'] ?? 0);
+    $column = trim((string)($_GET['column'] ?? ''));
+    $configurationKey = 'GPSF_CUSTOM_PRODUCT_FIELD_' . $slot;
+    $tokenIsValid = isset($_GET['securityToken'], $_SESSION['securityToken'])
+        && hash_equals($_SESSION['securityToken'], (string)$_GET['securityToken']);
+    $columnIsValid = preg_match('/^[a-z][a-z0-9_]{0,63}$/', $column) === 1
+        && stripos($column, 'xml') !== 0;
+
+    if (!$tokenIsValid || $slot < 1 || $slot > 5 || !$columnIsValid) {
+        $messageStack->add_session('Enter a valid lowercase database and feed column name. Use letters, numbers, and underscores only, beginning with a letter. XML field names cannot begin with xml.', 'error');
+    } else {
+        $db->Execute(
+            "UPDATE " . TABLE_CONFIGURATION . "
+                SET configuration_value = '" . zen_db_input($column) . "'
+              WHERE configuration_key = '$configurationKey'
+              LIMIT 1"
+        );
+        if (!$sniffer->field_exists(TABLE_PRODUCTS, $column)) {
+            $db->Execute(
+                'ALTER TABLE ' . TABLE_PRODUCTS .
+                ' ADD COLUMN `' . $column . "` VARCHAR(255) NOT NULL DEFAULT ''"
+            );
+            zen_record_admin_activity('Installed custom Google feed product field ' . $column . '.', 'info');
+        }
+        $messageStack->add_session(ucwords(str_replace('_', ' ', $column)) . ' custom product field installed.', 'success');
     }
     $gID = (int)($_GET['gID'] ?? 0);
     zen_redirect(zen_href_link(FILENAME_CONFIGURATION, 'gID=' . $gID));
