@@ -20,6 +20,8 @@ Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Goo
 4. Sign out of Zen Cart admin, then sign back in. The feeder's non-destructive database upgrade runs during admin initialization.
 5. Open **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** and confirm that the installed Reimagined Release is `1.0.3`.
 
+The database retains the original `Google Product Search Feeder II` configuration-group identity for upgrade and rollback compatibility. The longer Reimagined Release name is supplied by the admin language files.
+
 When upgrading, do not copy only the admin files. Feed generation runs from catalog-side files such as `includes/classes/gpsfFeedGenerator.php`, so an incomplete upload can show the new version in admin while continuing to generate an older feed.
 
 The optional product columns described below are not created automatically during an upgrade. Install only the fields the store needs by using their individual controls in the feeder configuration page.
