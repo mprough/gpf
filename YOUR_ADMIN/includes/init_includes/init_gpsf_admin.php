@@ -1,7 +1,7 @@
 <?php
 // -----
 // An initialization script to install the Google Product Search Feeder II.
-// Copyright 2023-2025, https://vinosdefrutastropicales.com
+// Copyright 2023-2026, https://vinosdefrutastropicales.com
 //
 // Last updated: v1.0.9
 //
