@@ -1,4 +1,4 @@
-# Zen Cart&reg; Google Product Search Feeder II, v1.0.8
+# Zen Cart&reg; Google Product Search Feeder II, v1.0.9
 An update to the Numinix version, now supporting Zen Carts 1.5.6b and above.  Validated on PHP versions 7.0 through 8.4.
 
 For additional questions and documentation, please see the [GPSF Wiki](https://github.com/lat9/gpsf/wiki).
@@ -24,3 +24,10 @@ is empty. The generated `shipping_weight` uses the catalog product weight plus a
 configurable packaging allowance, defaulting to 3%.
 When a product has no positive catalog weight, a configurable default shipping
 weight can be used as the base value.
+
+## Optional product fields
+
+Material, age group, color, and gender can be installed independently from the
+feeder configuration page. Each Install control adds its products-table column
+and enables the corresponding entry on the Zen Cart admin product editor. Only
+populated values are added to generated feeds.

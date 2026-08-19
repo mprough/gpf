@@ -72,7 +72,7 @@ img {
 
 <body>
     <h1>Google Product Search Feeder II for Zen Cart v1.5.6b and later, including v2.0.x and v2.1.0</h1>
-    <h3>Version 1.0.8</h3>
+    <h3>Version 1.0.9</h3>
     <p>Current Support Thread at Zen Cart Forums: <a href="https://www.zen-cart.com/showthread.php?229785-Google-Product-Search-Feeder-II-Support-Thread" target="_blank">https://www.zen-cart.com/showthread.php?229785-Google-Product-Search-Feeder-II-Support-Thread</a></p>
     <p>Zen Cart Download Link: <a href="https://www.zen-cart.com/downloads.php?do=file&id=2379" target="_blank">https://www.zen-cart.com/downloads.php?do=file&id=2379</a></p>
     <p>GitHub repository: <a href="https://github.com/lat9/gpsf" target="_blank">https://github.com/lat9/gpsf</a></p>
@@ -101,6 +101,7 @@ img {
             <li>/includes/languages/english/gpsf_main_controller.php</li>
             <li>/YOUR_ADMIN/gpsf_admin.php</li>
             <li>/YOUR_ADMIN/includes/auto_loaders/config.gpsf_admin.php</li>
+            <li>/YOUR_ADMIN/includes/classes/observers/auto.gpsfProductFields.php</li>
             <li>/YOUR_ADMIN/includes/extra_datafiles/gpsf_admin_filenames.php</li>
             <li>/YOUR_ADMIN/includes/functions/extra_functions/gpsf_admin_functions.php</li>
             <li>/YOUR_ADMIN/includes/functions/extra_functions/zen_cfg_read_only.php</li>
@@ -130,6 +131,10 @@ img {
 
     <h2>Version History</h2>
     <ul>
+        <li>v1.0.9, 2026-08-19 (mprough)<ul>
+            <li>Added independently installable material, age group, color, and gender product fields.</li>
+            <li>Installed fields appear on the Zen Cart admin product editor and populated values are included in XML and TXT feeds.</li>
+        </ul></li>
         <li>v1.0.8, 2026-08-19 (mprough)<ul>
             <li>Added a configurable default shipping weight for products with no positive catalog weight.</li>
             <li>The shipping-weight percentage increase is applied after selecting the product or default base weight.</li>

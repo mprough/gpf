@@ -17,6 +17,33 @@
  */
 require 'includes/application_top.php';
 
+if (isset($_GET['action']) && $_GET['action'] === 'install_product_field') {
+    $fieldDefinitions = [
+        'material' => ['column' => 'products_material', 'sql' => "VARCHAR(255) NOT NULL DEFAULT ''", 'label' => 'Material'],
+        'age_group' => ['column' => 'products_age_group', 'sql' => "VARCHAR(32) NOT NULL DEFAULT ''", 'label' => 'Age Group'],
+        'color' => ['column' => 'products_color', 'sql' => "VARCHAR(255) NOT NULL DEFAULT ''", 'label' => 'Color'],
+        'gender' => ['column' => 'products_gender', 'sql' => "VARCHAR(16) NOT NULL DEFAULT ''", 'label' => 'Gender'],
+    ];
+    $field = $_GET['field'] ?? '';
+    $tokenIsValid = isset($_GET['securityToken'], $_SESSION['securityToken'])
+        && hash_equals($_SESSION['securityToken'], (string)$_GET['securityToken']);
+    if (!$tokenIsValid || !isset($fieldDefinitions[$field])) {
+        $messageStack->add_session('The Google feed product-field installation request was invalid.', 'error');
+    } else {
+        $definition = $fieldDefinitions[$field];
+        if (!$sniffer->field_exists(TABLE_PRODUCTS, $definition['column'])) {
+            $db->Execute(
+                'ALTER TABLE ' . TABLE_PRODUCTS .
+                ' ADD COLUMN `' . $definition['column'] . '` ' . $definition['sql']
+            );
+            zen_record_admin_activity('Installed Google feed product field ' . $definition['column'] . '.', 'info');
+        }
+        $messageStack->add_session($definition['label'] . ' product field installed.', 'success');
+    }
+    $gID = (int)($_GET['gID'] ?? 0);
+    zen_redirect(zen_href_link(FILENAME_CONFIGURATION, 'gID=' . $gID));
+}
+
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     if (is_file(DIR_FS_CATALOG . GPSF_DIRECTORY . $_GET['file'])) {
         unlink(DIR_FS_CATALOG . GPSF_DIRECTORY . $_GET['file']);
