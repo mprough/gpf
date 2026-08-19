@@ -1,8 +1,9 @@
 <?php
 // -----
 // Google Product Search Feeder II, main controller language file.
+// Copyright 2023-2026, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.0
+// Last updated: v1.0.9
 //
 /**
  * Based on:

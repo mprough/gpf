@@ -1,7 +1,7 @@
 <?php
 // -----
 // Google Product Search Feeder II, admin tool.
-// Copyright 2023-2024, https://vinosdefrutastropicales.com
+// Copyright 2023-2026, https://vinosdefrutastropicales.com
 //
 // Last updated: v1.0.9
 //
