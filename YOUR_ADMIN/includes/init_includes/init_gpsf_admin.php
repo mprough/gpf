@@ -3,13 +3,13 @@
 // An initialization script to install the Google Product Search Feeder II.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.6
+// Last updated: v1.0.7
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
-define('GPSF_CURRENT_VERSION', '1.0.6');
+define('GPSF_CURRENT_VERSION', '1.0.7');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -95,6 +95,8 @@ if (!defined('GPSF_VERSION')) {
 
             ('Weight Units', 'GPSF_UNITS', 'lb', '<br>Choose a unit of weight measure, either pounds (the default) or kilograms.', $cgi, 414, now(), NULL, 'zen_cfg_select_option([\'lb\', \'kg\'],'),
 
+            ('Shipping Weight Increase', 'GPSF_SHIPPING_WEIGHT_INCREASE', '3', '<br>Percentage added to each product\'s catalog weight for <code>shipping_weight</code>. For example, <code>3</code> adds 3%. Default: <code>3</code>.', $cgi, 415, now(), NULL, NULL),
+
             ('Use Meta Title', 'GPSF_META_TITLE', 'false', '<br>Use a product\'s meta title (if not empty) as the product\'s feed title?  If set to <em>false</em> (the default), the <code>products_name</code> is used instead.', $cgi, 416, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
             ('Use cPath in URL', 'GPSF_USE_CPATH', 'false', '<br>Use a product\s &quot;cPath&quot; in each product\'s <code>g:link</code> feed attribute? Default: <em>false</em>', $cgi, 418, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
@@ -102,6 +104,10 @@ if (!defined('GPSF_VERSION')) {
             ('Convert Ampersands in Feed Links?', 'GPSF_CONVERT_AMPERSANDS', 'false', '<br>Convert ampersands in feed links to <code>%26</code> (<em>true</em>) or leave as-is (<em>false</em>)?<br><br>Default: <b>false</b>', $cgi, 419, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
             ('Google Product Category Default', 'GPSF_DEFAULT_PRODUCT_CATEGORY', '', '<br>Enter a default Google product category from the <a href=\"https://www.google.com/support/merchants/bin/answer.py?answer=160081\" target=\"_blank\" rel=\"noreferrer\">Google Category Taxonomy</a> or leave blank. You can override this default setting by creating a Google Product Category attribute as per the documentation.<br>', $cgi, 420, now(), NULL, NULL),
+
+            ('Use Product Category Column', 'GPSF_USE_PRODUCT_CATEGORY_COLUMN', 'false', '<br>Use a column in the products database table for each product\'s Google product category? If its value is empty, the Google Product Category Default is used.', $cgi, 422, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
+
+            ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br>Products-table column containing each product\'s Google product category. Default: <code>products_google_product_category</code>.', $cgi, 424, now(), NULL, NULL),
 
             ('Display Tax', 'GPSF_TAX_DISPLAY', 'false', '<br>Display tax per product? (US only)? Default: <em>false</em>.', $cgi, 500, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
@@ -182,6 +188,40 @@ switch (true) {
                     (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
                  VALUES
                     ('Feed Output Format', 'GPSF_OUTPUT_FORMAT', 'xml', '<br>Generate an XML feed or a tab-delimited TXT feed. Default: <code>xml</code>.', $cgi, 53, now(), NULL, 'zen_cfg_select_option([\\'xml\\', \\'txt\\'],')"
+            );
+        }
+    case version_compare(GPSF_VERSION, '1.0.7', '<'):           //-Fall through from above processing ...
+        $shipping_weight_increase = $db->Execute(
+            "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'GPSF_SHIPPING_WEIGHT_INCREASE' LIMIT 1"
+        );
+        if ($shipping_weight_increase->EOF) {
+            $db->Execute(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                 VALUES
+                    ('Shipping Weight Increase', 'GPSF_SHIPPING_WEIGHT_INCREASE', '3', '<br>Percentage added to each product\'s catalog weight for <code>shipping_weight</code>. For example, <code>3</code> adds 3%. Default: <code>3</code>.', $cgi, 415, now(), NULL, NULL)"
+            );
+        }
+        $use_category_column = $db->Execute(
+            "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'GPSF_USE_PRODUCT_CATEGORY_COLUMN' LIMIT 1"
+        );
+        if ($use_category_column->EOF) {
+            $db->Execute(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                 VALUES
+                    ('Use Product Category Column', 'GPSF_USE_PRODUCT_CATEGORY_COLUMN', 'false', '<br>Use a column in the products database table for each product\'s Google product category? If its value is empty, the Google Product Category Default is used.', $cgi, 422, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],')"
+            );
+        }
+        $category_column = $db->Execute(
+            "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'GPSF_PRODUCT_CATEGORY_COLUMN' LIMIT 1"
+        );
+        if ($category_column->EOF) {
+            $db->Execute(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                 VALUES
+                    ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br>Products-table column containing each product\'s Google product category. Default: <code>products_google_product_category</code>.', $cgi, 424, now(), NULL, NULL)"
             );
         }
     default:                                                    //-Fall through from above processing ...
