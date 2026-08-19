@@ -3,16 +3,18 @@
 // Google Product Search Feeder II.  A one-time tool to copy the older google product
 // search configuration settings to this plugin's settings.
 //
-// Copyright (C), 2023-2024.  https://vinosdefrutastropicales.com
+// Copyright (C), 2023-2026.  https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.1
+// Last updated: v1.0.9
 //
 // INSTRUCTIONS:
-// - Copy this file to the root of your site's file-system.
-// - Enter {your-website-address}/copy_google_search_configuration.php
-// - The settings copied are displayed on your screen and created in the
+// - Copy this file to the root of your site's renamed admin directory.
+// - Log into Zen Cart admin.
+// - Enter {your-website-address}/{your-admin}/copy_google_search_configuration.php
+// - The settings copied are displayed on screen and recorded in the
 //   file /logs/copy_google_search_configuration_YYYYMMDDHHIISS.log.
-// - Delete the file from the root of your site's file-system.
+// - The security-key value is redacted from both outputs.
+// - Delete this file from your admin directory immediately after use.
 //
 require 'includes/application_top.php';
 
@@ -41,7 +43,6 @@ $settings_to_copy = [
     'GOOGLE_PRODUCTS_NEG_MANUFACTURERS' => 'GPSF_NEG_MANUFACTURERS',
     'GOOGLE_PRODUCTS_EXPIRATION_BASE' => 'GPSF_EXPIRATION_BASE',
     'GOOGLE_PRODUCTS_EXPIRATION_DAYS' => 'GPSF_EXPIRATION_DAYS',
-    'GOOGLE_PRODUCTS_CURRENCY_DISPLAY' => 'GPSF_CURRENCY_DISPLAY',
     'GOOGLE_PRODUCTS_CURRENCY' => 'GPSF_CURRENCY',
     'GOOGLE_PRODUCTS_CONDITION' => 'GPSF_CONDITION',
     'GOOGLE_PRODUCTS_DEFAULT_PRODUCT_TYPE' => 'GPSF_DEFAULT_PRODUCT_TYPE',
@@ -54,7 +55,6 @@ $settings_to_copy = [
     'GOOGLE_PRODUCTS_TAX_DISPLAY' => 'GPSF_TAX_DISPLAY',
     'GOOGLE_PRODUCTS_TAX_COUNTRY' => 'GPSF_TAX_COUNTRY',
     'GOOGLE_PRODUCTS_TAX_REGION' => 'GPSF_TAX_REGION',
-    'GOOGLE_PRODUCTS_TAX_RATE' => 'GPSF_TAX_RATE',
     'GOOGLE_PRODUCTS_TAX_SHIPPING' => 'GPSF_TAX_SHIPPING',
     'GOOGLE_PRODUCTS_SHIPPING_METHOD' => 'GPSF_SHIPPING_METHOD',
     'GOOGLE_PRODUCTS_RATE_ZONE' => 'GPSF_RATE_ZONE',
@@ -73,24 +73,54 @@ $settings_to_copy = [
 ];
 
 $copy_logfile = DIR_FS_LOGS . '/copy_google_search_configuration_' . date('YmdHis') . '.log';
+$messages = [];
 $google_products = $db->Execute(
     "SELECT configuration_key, configuration_value, configuration_title
        FROM " . TABLE_CONFIGURATION . "
       WHERE configuration_key IN ('" . implode("', '", array_keys($settings_to_copy)) . "')"
 );
 foreach ($google_products as $next_setting) {
+    $source_key = $next_setting['configuration_key'];
+    $target_key = $settings_to_copy[$source_key];
+    $display_value = ($source_key === 'GOOGLE_PRODUCTS_ACCESS_KEY') ? '[redacted]' : $next_setting['configuration_value'];
+
     if ($next_setting['configuration_key'] === 'GOOGLE_PRODUCTS_OFFER_ID') {
         if ($next_setting['configuration_value'] !== 'id' && $next_setting['configuration_value'] !== 'model') {
-            error_log('Not copied ' . $next_setting['configuration_title'] . ' (' . $next_setting['configuration_value'] . '); value not supported by GPSF.' . PHP_EOL, 3, $copy_logfile);
+            $messages[] = 'Not copied ' . $next_setting['configuration_title'] . ' (' . $display_value . '); value not supported by GPSF.';
             continue;
         }
     }
+
+    $target_setting = $db->Execute(
+        "SELECT configuration_id
+           FROM " . TABLE_CONFIGURATION . "
+          WHERE configuration_key = '" . zen_db_input($target_key) . "'
+          LIMIT 1"
+    );
+    if ($target_setting->EOF) {
+        $messages[] = 'Not copied ' . $next_setting['configuration_title'] . '; target setting ' . $target_key . ' does not exist.';
+        continue;
+    }
+
     $db->Execute(
         "UPDATE " . TABLE_CONFIGURATION . "
-            SET configuration_value = '" . $next_setting['configuration_value'] . "'
-          WHERE configuration_key = '" . $settings_to_copy[$next_setting['configuration_key']] . "'"
+            SET configuration_value = '" . zen_db_input($next_setting['configuration_value']) . "'
+          WHERE configuration_key = '" . zen_db_input($target_key) . "'"
     );
-    error_log('Copied ' . $next_setting['configuration_title'] . ' (' . $next_setting['configuration_value'] . ') to its GPSF setting.' . PHP_EOL, 3, $copy_logfile);
+    $messages[] = 'Copied ' . $next_setting['configuration_title'] . ' (' . $display_value . ') to ' . $target_key . '.';
 }
+
+foreach ($messages as $message) {
+    error_log($message . PHP_EOL, 3, $copy_logfile);
+}
+
+header('Content-Type: text/html; charset=' . CHARSET);
+echo '<!doctype html><html><head><meta charset="' . htmlspecialchars(CHARSET, ENT_QUOTES, CHARSET) . '"><title>GPSF configuration conversion</title></head><body>';
+echo '<h1>GPSF configuration conversion complete</h1>';
+echo '<p>Review the results below, configure the v1.0.6-v1.0.9 settings manually, and delete this script from the admin directory now.</p><ul>';
+foreach ($messages as $message) {
+    echo '<li>' . htmlspecialchars($message, ENT_QUOTES, CHARSET) . '</li>';
+}
+echo '</ul><p>Log file: <code>' . htmlspecialchars($copy_logfile, ENT_QUOTES, CHARSET) . '</code></p></body></html>';
 
 require DIR_WS_INCLUDES . 'application_bottom.php';
