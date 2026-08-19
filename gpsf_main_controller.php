@@ -1,10 +1,10 @@
 <?php
 // -----
-// Google Product Search Feeder II, main script (cronable).
+// Red Headed Stepchild of Zen Cart® Google Product Search Feeder II, main script (cronable).
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: v1.0.9
+// Last updated: Reimagined Release v1.0.3
 //
 /**
  * Based on
@@ -20,7 +20,7 @@
 require 'includes/application_top.php';
 
 if (!defined('GPSF_ENABLED') || GPSF_ENABLED !== 'true') {
-    die('Google Product Search Feeder II is disabled');
+    die('Red Headed Stepchild of Zen Cart® Google Product Search Feeder II is disabled');
 }
 
 // process parameters
@@ -109,7 +109,7 @@ $output_format = (defined('GPSF_OUTPUT_FORMAT') && GPSF_OUTPUT_FORMAT === 'txt')
 $outfile .= '.' . $output_format; // example: domain_products_en.xml or domain_products_en.txt
 
 ob_start();
-echo '<p>' . sprintf(TEXT_GPSF_STARTED, GPSF_VERSION) . '</p>';
+echo '<p>' . sprintf(TEXT_GPSF_STARTED, RHS_GPSF_VERSION) . '</p>';
 echo '<p>' . TEXT_GPSF_FILE_LOCATION . $outfile . '</p>';
 echo '<p>Processing: Feed - ' . ($feed === 'yes' ? 'Yes' : 'No') . '</p>';
 echo '<p>PHP Memory Limit: ' . ini_get('memory_limit') . '</p>';
