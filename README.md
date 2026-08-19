@@ -1,6 +1,6 @@
-# Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.9
+# Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.10
 
-Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This independent fork is based on Google Product Search Feeder II v1.0.5 and updates it for current Zen Cart releases. Reimagined Release v1.0.9 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
+Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This independent fork is based on Google Product Search Feeder II v1.0.5 and updates it for current Zen Cart releases. Reimagined Release v1.0.10 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
 
 ## Features
 
@@ -20,7 +20,7 @@ Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Goo
 2. Rename the package's `YOUR_ADMIN` directory to match the store's admin directory.
 3. Upload the package files while preserving their directory structure. Make sure both the catalog-side generator files and admin files are updated.
 4. Sign out of Zen Cart admin, then sign back in. The feeder's non-destructive database upgrade runs during admin initialization.
-5. Open **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** and confirm that the installed Reimagined Release is `1.0.9`.
+5. Open **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** and confirm that the installed Reimagined Release is `1.0.10`.
 
 The database retains the original `Google Product Search Feeder II` configuration-group identity for upgrade and rollback compatibility. The longer Reimagined Release name is supplied by the admin language files.
 
@@ -115,6 +115,13 @@ Heartbeat data is stored in a hidden status file beside the configured feed outp
 
 ## Version history
 
+### Reimagined Release v1.0.10, 2026-08-19
+
+- Removed the read-only section records because Zen Cart displayed them as editable configuration entries
+- Replaced section records with bold, numbered group mastheads attached to real setting labels, preserving logical grouping without creating false controls
+- Automatically removes all `GPSF_SECTION_*` records created by Reimagined Release v1.0.9
+- Preserves every configured feeder value
+
 ### Reimagined Release v1.0.9, 2026-08-19
 
 - Reorganized the admin configuration page into 13 numbered sections
@@ -201,6 +208,6 @@ Heartbeat data is stored in a hidden status file beside the configured feed outp
 
 - Original Google Merchant Center Feeder by Numinix
 - Red Headed Stepchild of Zen Cart® Google Product Search Feeder II update by lat9 and contributors
-- Reimagined Releases v1.0.0-v1.0.9 developed by [PRO-Webs, Inc.](https://PRO-Webs.net), Melanie Prough
+- Reimagined Releases v1.0.0-v1.0.10 developed by [PRO-Webs, Inc.](https://PRO-Webs.net), Melanie Prough
 
 Zen Cart&reg; is a registered trademark of Zen Ventures, LLC. Google and Google Merchant Center are trademarks of Google LLC.
