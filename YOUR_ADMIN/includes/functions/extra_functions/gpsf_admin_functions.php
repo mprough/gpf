@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.4
+// Last updated: Reimagined Release v1.0.5
 //
 /**
  * Based on:
@@ -83,4 +83,42 @@ function gpsf_product_field_install_control($column, $key = ''): string
         ]
     );
     return $control . '<a class="btn btn-primary btn-sm" href="' . zen_href_link(FILENAME_GPSF_ADMIN, $parameters) . '">Install</a>';
+}
+
+function gpsf_custom_product_field_install_control($column, $key = ''): string
+{
+    global $sniffer;
+
+    if (preg_match('/^GPSF_CUSTOM_PRODUCT_FIELD_([1-5])$/', $key, $matches) !== 1) {
+        return '<span class="text-danger">Invalid custom-field slot</span>';
+    }
+
+    $slot = (int)$matches[1];
+    $column = trim((string)$column);
+    $name = "configuration[$key]";
+    $inputId = 'gpsf-custom-product-field-' . $slot;
+    $control = zen_draw_input_field(
+        $name,
+        $column,
+        'id="' . $inputId . '" maxlength="64" pattern="[a-z][a-z0-9_]{0,63}" placeholder="e.g. vehicle_type"'
+    );
+
+    if ($column !== '' && preg_match('/^[a-z][a-z0-9_]{0,63}$/', $column) === 1 && stripos($column, 'xml') !== 0 && $sniffer->field_exists(TABLE_PRODUCTS, $column)) {
+        $control .= ' <span class="label label-success">Installed</span>';
+    }
+
+    $parameters = http_build_query(
+        [
+            'action' => 'install_custom_product_field',
+            'slot' => $slot,
+            'gID' => (int)($_GET['gID'] ?? 0),
+            'securityToken' => $_SESSION['securityToken'],
+        ]
+    );
+    $installUrl = zen_href_link(FILENAME_GPSF_ADMIN, $parameters) . '&column=';
+    $onclick = 'window.location.href=' . json_encode($installUrl) .
+        '+encodeURIComponent(document.getElementById(' . json_encode($inputId) . ').value);';
+
+    return $control . ' <button type="button" class="btn btn-primary btn-sm" onclick="' .
+        htmlspecialchars($onclick, ENT_QUOTES, CHARSET) . '">Install</button>';
 }

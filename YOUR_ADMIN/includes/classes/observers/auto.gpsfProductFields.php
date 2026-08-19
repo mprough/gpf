@@ -4,7 +4,7 @@
 // Copyright 2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.4
+// Last updated: Reimagined Release v1.0.5
 //
 if (!defined('IS_ADMIN_FLAG') || IS_ADMIN_FLAG !== true) {
     die('Illegal Access');
@@ -33,6 +33,21 @@ class zcObserverGpsfProductFields extends base
 
     public function __construct()
     {
+        for ($slot = 1; $slot <= 5; $slot++) {
+            $configurationKey = 'GPSF_CUSTOM_PRODUCT_FIELD_' . $slot;
+            if (!defined($configurationKey)) {
+                continue;
+            }
+            $column = trim((string)constant($configurationKey));
+            if (preg_match('/^[a-z][a-z0-9_]{0,63}$/', $column) !== 1 || stripos($column, 'xml') === 0 || isset($this->fieldDefinitions[$column])) {
+                continue;
+            }
+            $this->fieldDefinitions[$column] = [
+                'label' => 'Google Feed ' . ucwords(str_replace('_', ' ', $column)),
+                'maxlength' => 255,
+            ];
+        }
+
         $this->attach(
             $this,
             [
