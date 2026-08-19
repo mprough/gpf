@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.8
+// Last updated: Reimagined Release v1.0.9
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.8');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.9');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -380,6 +380,112 @@ switch (true) {
                   WHERE configuration_key = 'GPSF_CUSTOM_PRODUCT_FIELD_$slot'
                   LIMIT 1"
             );
+        }
+    case version_compare($installedReimaginedVersion, '1.0.9', '<'):           //-Fall through from above processing ...
+        $configurationSections = [
+            ['GPSF_SECTION_STATUS_SECURITY', '1. Status and security', 'Enable feed generation and protect the generator URL.', 0],
+            ['GPSF_SECTION_RESOURCES', '2. Server resources and large stores', 'Control runtime resources and split very large feeds into smaller runs.', 100],
+            ['GPSF_SECTION_OUTPUT', '3. Feed file and output', 'Choose where and how the feed file is written.', 200],
+            ['GPSF_SECTION_SELECTION', '4. Product selection and exclusions', 'Choose which catalog products are eligible for export.', 300],
+            ['GPSF_SECTION_PRODUCT_DATA', '5. Core product data', 'Control identifiers, availability, condition, product type, titles, and links.', 400],
+            ['GPSF_SECTION_CATEGORY', '6. Google product category', 'Configure the store-wide category fallback and optional per-product category column.', 500],
+            ['GPSF_SECTION_WEIGHT', '7. Weight and shipping weight', 'Configure product_weight and shipping_weight output. These settings do not change Zen Cart shipping calculations.', 600],
+            ['GPSF_SECTION_OPTIONAL_FIELDS', '8. Optional Google product fields', 'Back up the database before installing a field. Install only the product columns this store needs.', 700],
+            ['GPSF_SECTION_CUSTOM_FIELDS', '9. Custom product fields', 'Back up the database before installing a field. Five optional products-table columns can be created and exported.', 800],
+            ['GPSF_SECTION_TAX', '10. Tax', 'Configure the optional US tax data exported in the feed.', 900],
+            ['GPSF_SECTION_SHIPPING', '11. Shipping', 'Export calculated shipping data or leave shipping configured in Google Merchant Center.', 1000],
+            ['GPSF_SECTION_IMAGES', '12. Images', 'Configure primary and additional product image handling.', 1100],
+            ['GPSF_SECTION_DEBUG', '13. Debugging', 'Control skipped-product diagnostics and termination limits.', 1200],
+        ];
+        foreach ($configurationSections as $section) {
+            $sectionExists = $db->Execute(
+                "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = '" . $section[0] . "' LIMIT 1"
+            );
+            if ($sectionExists->EOF) {
+                $db->Execute(
+                    "INSERT INTO " . TABLE_CONFIGURATION . "
+                        (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                     VALUES
+                        ('" . $section[1] . "', '" . $section[0] . "', '', '" . $section[2] . "', $cgi, " . (int)$section[3] . ", now(), NULL, 'zen_cfg_read_only(')"
+                );
+            }
+        }
+
+        $configurationMetadata = [
+            ['GPSF_VERSION', 'Upstream Version', 'Google Product Search Feeder II foundation version. This value is informational and cannot be edited.', 1],
+            ['RHS_GPSF_VERSION', 'Reimagined Release', 'Installed Red Headed Stepchild release. This value is informational and cannot be edited.', 2],
+            ['GPSF_ENABLED', 'Enable Feed Generation', 'Set to true to allow feed generation from the admin launcher or secured generator URL. When false, generation stops before a feed file is created.', 10],
+            ['GPSF_ACCESS_KEY', 'Security Key', 'Required secret included in the admin and cron generator URLs. Use a long random value of at least 32 letters and numbers, keep it private, and replace it if exposed.', 12],
+            ['GPSF_MAX_EXECUTION_TIME', 'Maximum Execution Time', 'Maximum generator runtime in seconds. Leave blank to use the server default. Some hosts do not allow PHP scripts to override this limit.', 110],
+            ['GPSF_MEMORY_LIMIT', 'Memory Limit', 'Generator memory limit in megabytes, such as 256 or 256M. Leave blank to use the server default. Some hosts do not allow PHP scripts to override this limit.', 112],
+            ['GPSF_MAX_PRODUCTS', 'Maximum Products per Feed', 'Maximum number of eligible products processed in one run. Use 0 to process all eligible products. A limit and offset can divide a large catalog into separate runs.', 120],
+            ['GPSF_START_PRODUCTS', 'Starting Offset for Partial Feed', 'Number of eligible query rows to skip before processing begins. This is a result offset, not a products_id. Use 0 to start with the first eligible product.', 122],
+            ['GPSF_DIRECTORY', 'Output Directory', 'Directory relative to the Zen Cart catalog root, including the trailing slash, such as feed/google/. The directory must already exist and be writable by PHP.', 210],
+            ['GPSF_OUTPUT_FILENAME', 'Feed File Prefix', 'Beginning of the generated filename without a path or extension. The value domain produces domain_products_en.xml or domain_products_en.txt.', 212],
+            ['GPSF_OUTPUT_FORMAT', 'Feed Output Format', 'Choose XML or tab-delimited TXT. Only the selected format is generated during a run.', 214],
+            ['GPSF_COMPRESS', 'Compress Feed File', 'Set to true to also create a gzip-compressed feed when PHP zlib gzip functions are available. The normal feed file remains available.', 216],
+            ['GPSF_CURRENCY', 'Feed Currency', 'Currency used for exported prices. Choose a currency configured in Zen Cart.', 218],
+            ['GPSF_XML_SANITIZATION', 'Advanced XML Sanitization', 'Applies additional cleanup when invalid characters prevent XML validation. Correct the store charset first. This setting has no effect on TXT output.', 220],
+            ['GPSF_SKIP_DUPLICATE_TITLES', 'Skip Duplicate Product Titles', 'Set to true to export only the first eligible product when multiple products have the same title. Review skipped-product diagnostics if distinct products share a name.', 310],
+            ['GPSF_POS_CATEGORIES', 'Included Category IDs', 'Comma-separated categories_id values. When populated, only products in these categories are eligible. Products matching an exclusion below are still excluded. Leave blank to include every category.', 320],
+            ['GPSF_NEG_CATEGORIES', 'Excluded Category IDs', 'Comma-separated categories_id values. Products in these categories are excluded, including products also matched by the included-category list. Leave blank for no category exclusions.', 322],
+            ['GPSF_POS_MANUFACTURERS', 'Included Manufacturer IDs', 'Comma-separated manufacturers_id values. When populated, only products from these manufacturers are eligible. Products matching an exclusion below are still excluded. Leave blank to include every manufacturer.', 324],
+            ['GPSF_NEG_MANUFACTURERS', 'Excluded Manufacturer IDs', 'Comma-separated manufacturers_id values. Products from these manufacturers are excluded, including products also matched by the included-manufacturer list. Leave blank for no manufacturer exclusions.', 326],
+            ['GPSF_EXPIRATION_BASE', 'Expiration Date Base', 'Choose now to calculate from the generation date or product to calculate from the latest product added, modified, or available date. Used with Expiration Date Adjustment.', 410],
+            ['GPSF_EXPIRATION_DAYS', 'Expiration Date Adjustment', 'Number of days added to the selected expiration-date base. Leave blank to omit expiration_date and allow Google to manage expiration.', 412],
+            ['GPSF_OFFER_ID', 'Offer ID Source', 'Choose id to export products_id or model to export products_model as g:id. Products without a model are skipped when model is selected. Do not change this after Google has matched existing offers unless you intend to create new offer IDs.', 420],
+            ['GPSF_INCLUDE_MIN_QUANTITY', 'Consider Minimum Order Quantity', 'Set to true to consider Product Qty Minimum when determining feed availability. Leave false when availability should depend only on normal stock status and quantity.', 422],
+            ['GPSF_INCLUDE_OUT_OF_STOCK', 'Include Out-of-Stock Products', 'Set to true to export eligible out-of-stock products with the appropriate availability value. Set to false to omit them from the feed.', 424],
+            ['GPSF_CONDITION', 'Default Product Condition', 'Condition exported for products without a more specific value. Choose new, used, or refurbished.', 426],
+            ['GPSF_PRODUCT_TYPE', 'Product Type Source', 'Choose top for the top-level category, bottom for the product category, full for the complete category path, or default to use Default Product Type for every product.', 428],
+            ['GPSF_DEFAULT_PRODUCT_TYPE', 'Default Product Type', 'Store-defined product_type value used only when Product Type Source is set to default. This is not the Google product category.', 430],
+            ['GPSF_META_TITLE', 'Use Product Meta Title', 'Set to true to use a non-empty product meta title as the feed title. Otherwise the normal Zen Cart product name is used.', 432],
+            ['GPSF_USE_CPATH', 'Include cPath in Product Links', 'Set to true to add the product category path to exported product URLs. Leave false for shorter canonical product links.', 434],
+            ['GPSF_CONVERT_AMPERSANDS', 'Encode Ampersands in Feed Links', 'Set to true to convert ampersands in product URLs to %26. Leave false unless the receiving system specifically requires that conversion.', 436],
+            ['GPSF_DEFAULT_PRODUCT_CATEGORY', 'Default Google Product Category', 'Store-wide fallback Google category used when no product-specific category is supplied. Enter a valid Google taxonomy ID or category path, or leave blank.', 510],
+            ['GPSF_USE_PRODUCT_CATEGORY_COLUMN', 'Use Product Category Column', 'Set to true to read a Google product category from the configured products-table column. A blank product value falls back to Default Google Product Category.', 512],
+            ['GPSF_PRODUCT_CATEGORY_COLUMN', 'Product Category Column Name', 'Existing products-table column containing each product Google category. The standard column is products_google_product_category. This setting does not create the column.', 514],
+            ['GPSF_WEIGHT', 'Export Product Weight', 'Set to true to export product_weight when the catalog product has a positive weight. This does not control shipping_weight, which is generated independently below.', 610],
+            ['GPSF_UNITS', 'Weight Units', 'Unit applied to both product_weight and shipping_weight. Choose lb for pounds or kg for kilograms. All entered catalog and default weights must use this unit.', 612],
+            ['GPSF_DEFAULT_SHIPPING_WEIGHT', 'Default Shipping Weight', 'Base used for shipping_weight only when a product has no positive catalog weight. Enter a value in Weight Units. Use 0 to omit shipping_weight for weightless products.', 614],
+            ['GPSF_SHIPPING_WEIGHT_INCREASE', 'Shipping Weight Increase Percentage', 'Percentage added to the positive catalog weight or Default Shipping Weight. For example, 3 adds 3 percent. Use 0 for no increase.', 616],
+            ['GPSF_PRODUCT_FIELD_MATERIAL', 'Material Product Field', '<strong>Back up the database before clicking Install.</strong> Installs products_material and adds Material to the admin product page. Populated values export as material. Installation does not overwrite existing product data.', 710],
+            ['GPSF_PRODUCT_FIELD_AGE_GROUP', 'Age Group Product Field', '<strong>Back up the database before clicking Install.</strong> Installs products_age_group and adds Age Group to the admin product page. Populated values export as age_group. Installation does not overwrite existing product data.', 712],
+            ['GPSF_PRODUCT_FIELD_COLOR', 'Color Product Field', '<strong>Back up the database before clicking Install.</strong> Installs products_color and adds Color to the admin product page. Populated values export as color. Installation does not overwrite existing product data.', 714],
+            ['GPSF_PRODUCT_FIELD_GENDER', 'Gender Product Field', '<strong>Back up the database before clicking Install.</strong> Installs products_gender and adds Gender to the admin product page. Populated values export as gender. Installation does not overwrite existing product data.', 716],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_1', 'Custom Product Field 1', '<strong>Back up the database before clicking Install.</strong> Enter a lowercase database and feed column name with no spaces, such as vehicle_type. Clearing and saving disables its admin input and feed export but does not remove the database column or its data.', 810],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_2', 'Custom Product Field 2', '<strong>Back up the database before clicking Install.</strong> Enter another lowercase column name with no spaces, or leave blank. Clearing and saving later disables the field but preserves its column and data.', 812],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_3', 'Custom Product Field 3', '<strong>Back up the database before clicking Install.</strong> Enter another lowercase column name with no spaces, or leave blank. Clearing and saving later disables the field but preserves its column and data.', 814],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_4', 'Custom Product Field 4', '<strong>Back up the database before clicking Install.</strong> Enter another lowercase column name with no spaces, or leave blank. Clearing and saving later disables the field but preserves its column and data.', 816],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_5', 'Custom Product Field 5', '<strong>Back up the database before clicking Install.</strong> Enter another lowercase column name with no spaces, or leave blank. Clearing and saving later disables the field but preserves its column and data.', 818],
+            ['GPSF_TAX_DISPLAY', 'Export US Tax', 'Set to true to export product tax data for the United States. Leave false when tax is configured in Google Merchant Center or tax data should not be included in the feed.', 910],
+            ['GPSF_TAX_COUNTRY', 'Tax Country', 'Two-letter country code used for feed tax data. The built-in tax export supports US.', 912],
+            ['GPSF_TAX_REGION', 'Tax Region', 'US state abbreviation, ZIP code, or ZIP prefix followed by an asterisk, such as GA or 31569 or 315*. Separate multiple regions with commas. Leave blank for all US regions.', 914],
+            ['GPSF_TAX_SHIPPING', 'Tax Shipping Charges', 'Choose y when shipping charges are taxable for the exported tax rule or n when they are not.', 916],
+            ['GPSF_SHIPPING_METHOD', 'Shipping Data Source', 'Choose merchant-center when shipping is configured in Google Merchant Center, none to omit shipping data, or a supported Zen Cart shipping method to calculate and export feed shipping.', 1010],
+            ['GPSF_RATE_ZONE', 'Shipping Zone ID', 'Zone ID used only with the zones shipping method or a compatible zone-based extension. Leave blank for other methods.', 1012],
+            ['GPSF_SHIPPING_COUNTRY', 'Shipping Destination Country', 'Destination country used to calculate and label exported shipping rates. The list displays ISO three-letter codes; USA is the default.', 1014],
+            ['GPSF_SHIPPING_REGION', 'Shipping Destination Region', 'Optional state, province, or postal-code pattern for the exported shipping rate. Leave blank when the rate applies throughout the selected country.', 1016],
+            ['GPSF_SHIPPING_SERVICE', 'Shipping Service Name', 'Optional customer-facing service name exported with the rate, such as Ground. Leave blank if no service label is needed.', 1018],
+            ['GPSF_SHIPPING_LABEL', 'Shipping Label Source', 'Choose products to export products_id or categories to export categories_id as shipping_label for matching product-specific rules in Google Merchant Center.', 1020],
+            ['GPSF_ALTERNATE_IMAGE_URL', 'Alternate Image Base URL', 'Optional absolute base URL when product images are hosted elsewhere. Include the trailing slash. The stored product image path is appended to this value.', 1110],
+            ['GPSF_IMAGE_HANDLER', 'Use Image Handler', 'Set to true to resize feed images through Image Handler when installed. Image processing can increase feed runtime and server load.', 1112],
+            ['GPSF_INCLUDE_ADDITIONAL_IMAGES', 'Include Additional Images', 'Set to true to export available additional product images. More images increase feed generation time and file size.', 1114],
+            ['GPSF_DEBUG', 'Enable Skipped-Product Debugging', 'Set to true to report why products were skipped. Use during testing or troubleshooting and review the output before disabling it.', 1210],
+            ['GPSF_DEBUG_MAX_SKIPPED', 'Maximum Skipped Products', 'When debugging is enabled, stop after this many skipped products. Leave blank to continue regardless of the skipped count. Default: 1000.', 1212],
+        ];
+        foreach ($configurationMetadata as $setting) {
+            $sql = "UPDATE " . TABLE_CONFIGURATION . "
+                       SET configuration_title = :title:,
+                           configuration_description = :description:,
+                           sort_order = :sortOrder:
+                     WHERE configuration_key = :configurationKey:
+                     LIMIT 1";
+            $sql = $db->bindVars($sql, ':title:', $setting[1], 'string');
+            $sql = $db->bindVars($sql, ':description:', $setting[2], 'string');
+            $sql = $db->bindVars($sql, ':sortOrder:', (int)$setting[3], 'integer');
+            $sql = $db->bindVars($sql, ':configurationKey:', $setting[0], 'string');
+            $db->Execute($sql);
         }
     default:                                                    //-Fall through from above processing ...
         break;
