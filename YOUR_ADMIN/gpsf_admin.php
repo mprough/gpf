@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.3
+// Last updated: Reimagined Release v1.0.4
 //
 /**
  * Based on:
@@ -285,6 +285,22 @@ if ($feed_files === []) {
                     <h4>
                         <?= GPSF_ELAPSED_TIME ?> <span id="feed-elapsed-time"></span>
                     </h4>
+                    <div id="feed-heartbeat" class="well text-left">
+                        <p><strong><?= GPSF_HEARTBEAT_STATUS ?></strong> <span id="feed-heartbeat-status"></span></p>
+                        <div class="progress">
+                            <div id="feed-progress-bar" class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width: 0%">0%</div>
+                        </div>
+                        <p>
+                            <?= GPSF_HEARTBEAT_SCANNED ?> <span id="feed-scanned">0</span> / <span id="feed-total">0</span>;
+                            <?= GPSF_HEARTBEAT_WRITTEN ?> <span id="feed-written">0</span>;
+                            <?= GPSF_HEARTBEAT_SKIPPED ?> <span id="feed-skipped">0</span>
+                        </p>
+                        <p>
+                            <?= GPSF_HEARTBEAT_MEMORY ?> <span id="feed-memory">0</span> MB;
+                            <?= GPSF_HEARTBEAT_LAST ?> <span id="feed-heartbeat-age">0</span> <?= GPSF_HEARTBEAT_SECONDS_AGO ?>
+                        </p>
+                        <p id="feed-heartbeat-message"></p>
+                    </div>
                 </div>
                 <div id="feed-output" class="text-center"></div>
             </div>
@@ -293,6 +309,73 @@ if ($feed_files === []) {
     <script>
     jQuery(document).ready(function() {
         jQuery('#feed-container').hide();
+        jQuery('#feed-heartbeat').hide();
+        var statusPollTimer = null;
+        var activeGeneration = false;
+
+        function renderFeedStatus(status)
+        {
+            var shouldDisplay = activeGeneration || status.status === 'running' || status.status === 'unresponsive' || jQuery('#feed-heartbeat').is(':visible');
+            if (!shouldDisplay) {
+                return;
+            }
+
+            jQuery('#feed-container').show();
+            jQuery('#feed-heartbeat').show();
+            jQuery('#feed-heartbeat-status').text(status.status + ': ' + status.stage);
+            jQuery('#feed-heartbeat-message').text(status.message || '');
+            jQuery('#feed-scanned').text(Number(status.scanned || 0).toLocaleString());
+            jQuery('#feed-total').text(Number(status.total || 0).toLocaleString());
+            jQuery('#feed-written').text(Number(status.written || 0).toLocaleString());
+            jQuery('#feed-skipped').text(Number(status.skipped || 0).toLocaleString());
+            jQuery('#feed-memory').text(Number(status.memory_mb || 0).toFixed(2));
+            jQuery('#feed-heartbeat-age').text(status.heartbeat_age === null ? '0' : status.heartbeat_age);
+
+            var percent = Math.max(0, Math.min(100, Number(status.percent || 0)));
+            jQuery('#feed-progress-bar')
+                .css('width', percent + '%')
+                .attr('aria-valuenow', percent)
+                .text(percent + '%');
+
+            if (status.started_at) {
+                var started = new Date(Number(status.started_at) * 1000);
+                jQuery('#feed-start-time').text(started.toLocaleTimeString());
+            }
+            if (status.elapsed_seconds !== undefined) {
+                var elapsed = Number(status.elapsed_seconds);
+                var hours = Math.floor(elapsed / 3600);
+                var minutes = Math.floor((elapsed - (hours * 3600)) / 60);
+                var seconds = elapsed - (hours * 3600) - (minutes * 60);
+                jQuery('#feed-elapsed-time').text(String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0'));
+            }
+
+            if (status.status === 'complete' || status.status === 'failed') {
+                activeGeneration = false;
+                jQuery('*').css('cursor', 'default');
+                jQuery('#feed-generate').prop('disabled', false);
+            }
+        }
+
+        function pollFeedStatus(parameters)
+        {
+            if (statusPollTimer !== null) {
+                clearTimeout(statusPollTimer);
+            }
+            jQuery.getJSON('<?= $gpsf_main_controller . '.php' ?>', parameters + '&status=1')
+                .done(function(status) {
+                    renderFeedStatus(status);
+                    if (activeGeneration || status.status === 'running' || status.status === 'unresponsive') {
+                        statusPollTimer = setTimeout(function() { pollFeedStatus(parameters); }, 3000);
+                    }
+                })
+                .fail(function() {
+                    if (activeGeneration) {
+                        statusPollTimer = setTimeout(function() { pollFeedStatus(parameters); }, 5000);
+                    }
+                });
+        }
+
+        pollFeedStatus(jQuery('#feed').serialize());
 
         jQuery('#feed').on('submit', function() {
             const addZero = (num) => `${num}`.padStart(2, '0');
@@ -324,12 +407,20 @@ if ($feed_files === []) {
             jQuery('#feed-start-time').text(addZero(date.getHours())+':'+addZero(date.getMinutes())+':'+addZero(date.getSeconds()));
 
             jQuery('#feed-output').html('');
+            jQuery('#feed-text').show();
             jQuery('#feed-generate').prop('disabled', true);
             jQuery('*').css('cursor', 'wait');
             jQuery('#feed-container').show();
+            jQuery('#feed-heartbeat').show();
+            activeGeneration = true;
+            var feedParameters = jQuery(this).serialize() + '&run_id=' + encodeURIComponent('gpsf_' + Date.now());
+            pollFeedStatus(feedParameters);
 
-            jQuery.get('<?= $gpsf_main_controller . '.php' ?>', jQuery(this).serialize())
+            jQuery.get('<?= $gpsf_main_controller . '.php' ?>', feedParameters)
             .done(function(data, textStatus, jqXHR) {
+                activeGeneration = false;
+                var finalStatusParameters = (data.indexOf('Pre-existing lock file') >= 0) ? jQuery('#feed').serialize() : feedParameters;
+                pollFeedStatus(finalStatusParameters);
                 var lockMessage = '';
                 jQuery.get('<?= zen_href_link(FILENAME_GPSF_ADMIN) ?>', function(data2) {
                     var availableDownloads = jQuery(data2).find('#feed-files').html();
@@ -352,9 +443,7 @@ if ($feed_files === []) {
                     jQuery('#feed-output').html('<p class="text-danger">Request failed, ' + jqXHR.statusText + ' (' + jqXHR.status + ').</p>');
                 }
 
-                jQuery('#feed-text').hide();
-                jQuery('*').css('cursor', 'default');
-                jQuery('#feed-generate').prop('disabled', false);
+                jQuery('#feed-text').text('The browser request ended. Heartbeat monitoring will continue while the server reports that the feed is running.');
             });
             return false;
         });

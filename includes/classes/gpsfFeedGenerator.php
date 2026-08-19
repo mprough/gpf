@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.3
+// Last updated: Reimagined Release v1.0.4
 //
 /**
  * Based on:
@@ -36,6 +36,7 @@ class gpsfTextWriter
     protected $currentItem = [];
     protected $structuredValues = [];
     protected $inItem = false;
+    protected $progressCallback;
 
     public function __construct()
     {
@@ -119,10 +120,16 @@ class gpsfTextWriter
     public function endDocument() { return true; }
     public function flush($empty = true) { return ''; }
 
+    public function setProgressCallback($callback)
+    {
+        $this->progressCallback = is_callable($callback) ? $callback : null;
+    }
+
     public function export($fp)
     {
         fputcsv($fp, $this->headers, "\t", '"', '');
         rewind($this->spool);
+        $rowsWritten = 0;
         while (($line = fgets($this->spool)) !== false) {
             $item = json_decode($line, true);
             $row = [];
@@ -130,6 +137,10 @@ class gpsfTextWriter
                 $row[] = $item[$header] ?? '';
             }
             fputcsv($fp, $row, "\t", '"', '');
+            $rowsWritten++;
+            if (($rowsWritten % 1000) === 0 && $this->progressCallback !== null) {
+                call_user_func($this->progressCallback);
+            }
         }
         fflush($fp);
     }
@@ -212,6 +223,11 @@ class gpsfFeedGenerator
         $products,
         $totalProducts = 0,
         $productsProcessed = 0,
+        $productsScanned = 0,
+        $progressCallback,
+        $progressStage = 'initializing',
+        $lastProgressTime = 0.0,
+        $lastProgressScanned = 0,
         $taxRates = [],
         $identifiersSet,
         $identifiersList,
@@ -343,6 +359,40 @@ class gpsfFeedGenerator
         return $this->productsProcessed;
     }
 
+    public function getTotalProductsScanned()
+    {
+        return $this->productsScanned;
+    }
+
+    public function setProgressCallback($callback)
+    {
+        $this->progressCallback = is_callable($callback) ? $callback : null;
+    }
+
+    protected function reportProgress($force = false)
+    {
+        if ($this->progressCallback === null) {
+            return;
+        }
+
+        $now = microtime(true);
+        $productsSinceLastReport = $this->productsScanned - $this->lastProgressScanned;
+        if (!$force && $productsSinceLastReport < 100 && ($now - $this->lastProgressTime) < 5) {
+            return;
+        }
+
+        $this->lastProgressTime = $now;
+        $this->lastProgressScanned = $this->productsScanned;
+        call_user_func(
+            $this->progressCallback,
+            $this->productsScanned,
+            $this->productsProcessed,
+            max(0, $this->productsScanned - $this->productsProcessed),
+            $this->totalProducts,
+            $this->progressStage
+        );
+    }
+
     // -----
     // Previously inline in google_product_search.php.  Moving all feed generation
     // into the class.
@@ -354,6 +404,10 @@ class gpsfFeedGenerator
         $this->fp = $fp;
 
         $this->initializeProductsFeed($limit, $offset);
+        $this->productsScanned = 0;
+        $this->productsProcessed = 0;
+        $this->progressStage = 'products';
+        $this->reportProgress(true);
 
         // -----
         // Initialize some additional variables to support a feed that skips duplicate titles.
@@ -365,8 +419,11 @@ class gpsfFeedGenerator
         // The initialization has gathered the feed's products into the class'
         // products array, loop through each.
         //
-        $this->productsProcessed = 0;
         foreach ($this->products as $product) {
+            if ($this->productsScanned > 0) {
+                $this->reportProgress();
+            }
+            $this->productsScanned++;
             $products_id = $product['products_id'];
             $products_name = $product['products_name'];
 
@@ -576,6 +633,7 @@ class gpsfFeedGenerator
         // Since all products are now staged for the feed, free up the
         // memory associated with the feed's products.
         //
+        $this->reportProgress(true);
         unset($this->products);
 
         // -----
@@ -1378,6 +1436,8 @@ protected function getCategoryInfo($master_categories_id): array
     //
     protected function finalizeProductsFeed()
     {
+        $this->progressStage = 'writing';
+        $this->reportProgress(true);
         $this->xmlWriter->endElement(); // end channel
         $this->xmlWriter->endElement(); // end rss
         $this->xmlWriter->endDocument(); // end xml
@@ -1386,6 +1446,9 @@ protected function getCategoryInfo($master_categories_id): array
         // Write the remaining in-memory XML elements to the output file.
         //
         if ($this->xmlWriter instanceof gpsfTextWriter) {
+            $this->xmlWriter->setProgressCallback(function () {
+                $this->reportProgress();
+            });
             $this->xmlWriter->export($this->fp);
         } else {
             fwrite($this->fp, $this->xmlWriter->flush(true));
@@ -1393,6 +1456,7 @@ protected function getCategoryInfo($master_categories_id): array
         }
 
         unset($this->xmlWriter);
+        $this->reportProgress(true);
     }
 
 // SHIPPING FUNCTIONS //
