@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.3
+// Last updated: Reimagined Release v1.0.4
 //
 /**
  * Based on:
@@ -45,3 +45,10 @@ define('GPSF_BUTTON_DELETE', 'Delete');
 define('GPSF_PROCESSING_FEED_TEXT', 'Processing feed ... please wait ...');
 define('GPSF_FEED_STARTED_AT', 'Feed started at');
 define('GPSF_ELAPSED_TIME', 'Elapsed time:');
+define('GPSF_HEARTBEAT_STATUS', 'Server status:');
+define('GPSF_HEARTBEAT_SCANNED', 'Scanned:');
+define('GPSF_HEARTBEAT_WRITTEN', 'Written:');
+define('GPSF_HEARTBEAT_SKIPPED', 'Skipped:');
+define('GPSF_HEARTBEAT_MEMORY', 'Memory:');
+define('GPSF_HEARTBEAT_LAST', 'Last heartbeat:');
+define('GPSF_HEARTBEAT_SECONDS_AGO', 'seconds ago');

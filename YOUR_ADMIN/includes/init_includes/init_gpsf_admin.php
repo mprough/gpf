@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.3
+// Last updated: Reimagined Release v1.0.4
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.3');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.4');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -317,6 +317,8 @@ switch (true) {
                     ('" . $setting[0] . "', '" . $setting[1] . "', '" . $setting[2] . "', '" . $setting[3] . "', $cgi, " . (int)$setting[4] . ", now(), NULL, 'gpsf_product_field_install_control(')"
             );
         }
+    case version_compare($installedReimaginedVersion, '1.0.4', '<'):           //-Fall through from above processing ...
+        // Reimagined Release v1.0.4 adds file-based heartbeat reporting and requires no database changes.
     default:                                                    //-Fall through from above processing ...
         break;
 }

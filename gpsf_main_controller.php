@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.3
+// Last updated: Reimagined Release v1.0.4
 //
 /**
  * Based on
@@ -80,6 +80,11 @@ if ($type !== 'products') {
 $feed = $gpsf->isFeedGeneration();
 
 require zen_get_file_directory(DIR_WS_LANGUAGES . $_SESSION['language'] . '/', 'gpsf_main_controller.php', 'false');
+
+// Release the PHP session lock so heartbeat requests can run while this request generates the feed.
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
 ?>
 <html>
 <body>
@@ -107,9 +112,62 @@ if ($query_offset > 0) {
 }
 $output_format = (defined('GPSF_OUTPUT_FORMAT') && GPSF_OUTPUT_FORMAT === 'txt') ? 'txt' : 'xml';
 $outfile .= '.' . $output_format; // example: domain_products_en.xml or domain_products_en.txt
+$lockfile = "$outfile.lock";
+$statusfile = dirname($outfile) . '/.' . basename($outfile) . '.status.json';
+$requestedRunId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)($_REQUEST['run_id'] ?? ''));
+
+if (isset($_REQUEST['status']) && $_REQUEST['status'] === '1') {
+    $status = [
+        'status' => 'idle',
+        'stage' => 'idle',
+        'message' => 'No feed generation status is available for these settings.',
+        'scanned' => 0,
+        'written' => 0,
+        'skipped' => 0,
+        'total' => 0,
+        'percent' => 0,
+        'memory_mb' => 0,
+        'started_at' => null,
+        'updated_at' => null,
+        'elapsed_seconds' => 0,
+        'output_file' => basename($outfile),
+        'run_id' => null,
+    ];
+    if (is_file($statusfile)) {
+        $savedStatus = json_decode((string)file_get_contents($statusfile), true);
+        if (is_array($savedStatus)) {
+            $status = array_merge($status, $savedStatus);
+        }
+    }
+    if ($requestedRunId !== '' && $status['run_id'] !== $requestedRunId) {
+        $status = array_merge($status, [
+            'status' => 'idle',
+            'stage' => 'waiting',
+            'message' => 'Waiting for the requested feed run to start.',
+            'scanned' => 0,
+            'written' => 0,
+            'skipped' => 0,
+            'total' => 0,
+            'percent' => 0,
+            'started_at' => null,
+            'updated_at' => null,
+            'elapsed_seconds' => 0,
+            'run_id' => $requestedRunId,
+        ]);
+    }
+    $heartbeatAge = ($status['updated_at'] === null) ? null : max(0, time() - (int)$status['updated_at']);
+    $status['heartbeat_age'] = $heartbeatAge;
+    if ($status['status'] === 'running' && $heartbeatAge !== null && $heartbeatAge > 120) {
+        $status['status'] = 'unresponsive';
+        $status['message'] = 'No heartbeat has been received for more than two minutes. Check the PHP error logs before starting another feed.';
+    }
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode($status, JSON_UNESCAPED_SLASHES);
+    exit;
+}
 
 ob_start();
-$reimaginedVersion = defined('RHS_GPSF_VERSION') ? RHS_GPSF_VERSION : '1.0.3';
+$reimaginedVersion = defined('RHS_GPSF_VERSION') ? RHS_GPSF_VERSION : '1.0.4';
 echo '<p>' . sprintf(TEXT_GPSF_STARTED, $reimaginedVersion) . '</p>';
 echo '<p>' . TEXT_GPSF_FILE_LOCATION . $outfile . '</p>';
 echo '<p>Processing: Feed - ' . ($feed === 'yes' ? 'Yes' : 'No') . '</p>';
@@ -132,7 +190,6 @@ if ($feed === 'yes') {
     // If so, a feed's in the process of re-generating and we'll exit so as not
     // to overwrite another in-process generation.
     //
-    $lockfile = "$outfile.lock";
     if (file_exists($lockfile) && filemtime($lockfile) > time() - (1 * 60 * 60)) {
         exit("Pre-existing lock file ($lockfile) found, another feed is currently in process!");
     }
@@ -149,7 +206,7 @@ if ($feed === 'yes') {
     // Acquire a lock on the to-be-generated feed-file, exiting if the lock
     // request fails.
     //
-    if (flock($fp, LOCK_EX) === false) {
+    if (flock($fp, LOCK_EX | LOCK_NB) === false) {
         fclose($fp);
         exit("Unable to lock '$outfile' for the processing; feed not generated.");
     }
@@ -163,6 +220,78 @@ if ($feed === 'yes') {
     ftruncate($fp, 0);
 
     $timer_feed_start = $gpsf->microtime_float();
+    $feedCompleted = false;
+    $statusData = [
+        'status' => 'running',
+        'stage' => 'initializing',
+        'message' => 'Initializing feed generation.',
+        'scanned' => 0,
+        'written' => 0,
+        'skipped' => 0,
+        'total' => 0,
+        'percent' => 0,
+        'memory_mb' => round(memory_get_usage(true) / 1048576, 2),
+        'started_at' => time(),
+        'updated_at' => time(),
+        'elapsed_seconds' => 0,
+        'output_file' => basename($outfile),
+        'format' => $output_format,
+        'run_id' => ($requestedRunId === '') ? uniqid('gpsf_', true) : $requestedRunId,
+    ];
+    $writeStatus = function (array $changes = []) use (&$statusData, $statusfile, $lockfile) {
+        $statusData = array_merge($statusData, $changes);
+        $statusData['updated_at'] = time();
+        $statusData['elapsed_seconds'] = max(0, $statusData['updated_at'] - (int)$statusData['started_at']);
+        $statusData['memory_mb'] = round(memory_get_usage(true) / 1048576, 2);
+        if ((int)$statusData['total'] > 0) {
+            $statusData['percent'] = min(100, round(((int)$statusData['scanned'] / (int)$statusData['total']) * 100, 1));
+        }
+        $temporaryStatusFile = $statusfile . '.tmp';
+        $statusJson = json_encode($statusData, JSON_UNESCAPED_SLASHES);
+        if ($statusJson !== false && file_put_contents($temporaryStatusFile, $statusJson, LOCK_EX) !== false) {
+            if (!rename($temporaryStatusFile, $statusfile)) {
+                file_put_contents($statusfile, $statusJson, LOCK_EX);
+                unlink($temporaryStatusFile);
+            }
+        }
+        if ($statusData['status'] === 'running') {
+            touch($lockfile);
+        } elseif (file_exists($lockfile)) {
+            unlink($lockfile);
+        }
+    };
+    $writeStatus();
+    register_shutdown_function(function () use (&$feedCompleted, &$statusData, $writeStatus) {
+        if ($feedCompleted) {
+            return;
+        }
+        $lastError = error_get_last();
+        $message = 'Feed generation stopped before completion.';
+        if (is_array($lastError) && isset($lastError['message'])) {
+            $message .= ' ' . $lastError['message'];
+        }
+        $writeStatus([
+            'status' => 'failed',
+            'stage' => 'failed',
+            'message' => $message,
+        ]);
+    });
+
+    $gpsf->setProgressCallback(function ($scanned, $written, $skipped, $total, $stage) use ($writeStatus) {
+        $stageMessages = [
+            'products' => 'Processing products.',
+            'writing' => 'Writing the final feed file.',
+        ];
+        $writeStatus([
+            'status' => 'running',
+            'stage' => $stage,
+            'message' => $stageMessages[$stage] ?? 'Feed generation is running.',
+            'scanned' => (int)$scanned,
+            'written' => (int)$written,
+            'skipped' => (int)$skipped,
+            'total' => (int)$total,
+        ]);
+    });
 
     // -----
     // Kick the feed's generation off ...
@@ -172,24 +301,54 @@ if ($feed === 'yes') {
     // release the lock
     flock($fp, LOCK_UN);
     fclose($fp);
-    if (file_exists($lockfile)) {
-        unlink($lockfile);
-    }
-
     if (GPSF_COMPRESS === 'true' && function_exists('gzopen')) {
-        $gzcontent = file_get_contents($outfile);
+        $writeStatus([
+            'status' => 'running',
+            'stage' => 'compressing',
+            'message' => 'Compressing the completed feed file.',
+        ]);
+        $compressedOutfile = $outfile . '.gz';
+        $source = fopen($outfile, 'rb');
+        $compressed = gzopen($compressedOutfile, 'w9');
+        if ($source === false || $compressed === false) {
+            throw new RuntimeException('Unable to open the feed files for compression.');
+        }
+        $lastCompressionHeartbeat = time();
+        while (!feof($source)) {
+            $chunk = fread($source, 1048576);
+            if ($chunk === false || gzwrite($compressed, $chunk) === false) {
+                fclose($source);
+                gzclose($compressed);
+                throw new RuntimeException('Unable to compress the generated feed file.');
+            }
+            if (time() - $lastCompressionHeartbeat >= 5) {
+                $writeStatus();
+                $lastCompressionHeartbeat = time();
+            }
+        }
+        fclose($source);
+        gzclose($compressed);
         unlink($outfile);
-
-        $outfile .= '.gz'; // Append .gz to end of file name
-        $gz = gzopen($outfile, 'w9'); // Open file for writing, 0 (no) to 9 (maximum) compression
-        gzwrite($gz, $gzcontent); // Write compressed file
-        gzclose($gz); // Close file handler
+        $outfile = $compressedOutfile;
     }
 
     $products_total = $gpsf->getTotalProducts();
     $products_processed = $gpsf->getTotalProductsProcessed();
     $products_skipped = $products_total - $products_processed;
     $peak_memory_usage_mb = (float)(memory_get_peak_usage(true) / (1024 * 1024));
+    $writeStatus([
+        'status' => 'complete',
+        'stage' => 'complete',
+        'message' => 'Feed generation completed successfully.',
+        'scanned' => $gpsf->getTotalProductsScanned(),
+        'written' => $products_processed,
+        'skipped' => $products_skipped,
+        'total' => $products_total,
+        'percent' => 100,
+        'memory_mb' => round($peak_memory_usage_mb, 2),
+        'output_file' => basename($outfile),
+    ]);
+    $feedCompleted = true;
     echo
         '<p>' .
             sprintf(TEXT_GPSF_FEED_COMPLETE, $gpsf->microtime_float() - $timer_feed_start, $peak_memory_usage_mb) .
