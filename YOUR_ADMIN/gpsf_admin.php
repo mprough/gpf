@@ -1,10 +1,10 @@
 <?php
 // -----
-// Google Product Search Feeder II, admin tool.
+// Red Headed Stepchild of Zen Cart® Google Product Search Feeder II, admin tool.
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: v1.0.9
+// Last updated: Reimagined Release v1.0.3
 //
 /**
  * Based on:
@@ -144,7 +144,7 @@ function init()
 <?php
 $gpsf_main_controller = HTTP_SERVER . DIR_WS_CATALOG . FILENAME_GPSF_MAIN_CONTROLLER;
 ?>
-    <h1 class="pageHeading"><?= sprintf(HEADING_TITLE, GPSF_VERSION) ?></h1>
+    <h1 class="pageHeading"><?= sprintf(HEADING_TITLE, RHS_GPSF_VERSION) ?></h1>
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-4">
