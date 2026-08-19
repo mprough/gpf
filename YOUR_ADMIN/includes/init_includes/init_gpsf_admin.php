@@ -3,13 +3,13 @@
 // An initialization script to install the Google Product Search Feeder II.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.8
+// Last updated: v1.0.9
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
-define('GPSF_CURRENT_VERSION', '1.0.8');
+define('GPSF_CURRENT_VERSION', '1.0.9');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -110,6 +110,14 @@ if (!defined('GPSF_VERSION')) {
             ('Use Product Category Column', 'GPSF_USE_PRODUCT_CATEGORY_COLUMN', 'false', '<br>Use a column in the products database table for each product\'s Google product category? If its value is empty, the Google Product Category Default is used.', $cgi, 422, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
             ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br>Products-table column containing each product\'s Google product category. Default: <code>products_google_product_category</code>.', $cgi, 424, now(), NULL, NULL),
+
+            ('Material Product Field', 'GPSF_PRODUCT_FIELD_MATERIAL', 'products_material', '<br>Install an optional Material entry on the admin product page. Populated values are exported as <code>material</code>.', $cgi, 430, now(), NULL, 'gpsf_product_field_install_control('),
+
+            ('Age Group Product Field', 'GPSF_PRODUCT_FIELD_AGE_GROUP', 'products_age_group', '<br>Install an optional Age Group entry on the admin product page. Populated values are exported as <code>age_group</code>.', $cgi, 432, now(), NULL, 'gpsf_product_field_install_control('),
+
+            ('Color Product Field', 'GPSF_PRODUCT_FIELD_COLOR', 'products_color', '<br>Install an optional Color entry on the admin product page. Populated values are exported as <code>color</code>.', $cgi, 434, now(), NULL, 'gpsf_product_field_install_control('),
+
+            ('Gender Product Field', 'GPSF_PRODUCT_FIELD_GENDER', 'products_gender', '<br>Install an optional Gender entry on the admin product page. Populated values are exported as <code>gender</code>.', $cgi, 436, now(), NULL, 'gpsf_product_field_install_control('),
 
             ('Display Tax', 'GPSF_TAX_DISPLAY', 'false', '<br>Display tax per product? (US only)? Default: <em>false</em>.', $cgi, 500, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
@@ -245,6 +253,27 @@ switch (true) {
               WHERE configuration_key = 'GPSF_SHIPPING_WEIGHT_INCREASE'
               LIMIT 1"
         );
+    case version_compare(GPSF_VERSION, '1.0.9', '<'):           //-Fall through from above processing ...
+        $product_field_settings = [
+            ['Material Product Field', 'GPSF_PRODUCT_FIELD_MATERIAL', 'products_material', '<br>Install an optional Material entry on the admin product page. Populated values are exported as <code>material</code>.', 430],
+            ['Age Group Product Field', 'GPSF_PRODUCT_FIELD_AGE_GROUP', 'products_age_group', '<br>Install an optional Age Group entry on the admin product page. Populated values are exported as <code>age_group</code>.', 432],
+            ['Color Product Field', 'GPSF_PRODUCT_FIELD_COLOR', 'products_color', '<br>Install an optional Color entry on the admin product page. Populated values are exported as <code>color</code>.', 434],
+            ['Gender Product Field', 'GPSF_PRODUCT_FIELD_GENDER', 'products_gender', '<br>Install an optional Gender entry on the admin product page. Populated values are exported as <code>gender</code>.', 436],
+        ];
+        foreach ($product_field_settings as $setting) {
+            $setting_exists = $db->Execute(
+                "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = '" . $setting[1] . "' LIMIT 1"
+            );
+            if (!$setting_exists->EOF) {
+                continue;
+            }
+            $db->Execute(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                 VALUES
+                    ('" . $setting[0] . "', '" . $setting[1] . "', '" . $setting[2] . "', '" . $setting[3] . "', $cgi, " . (int)$setting[4] . ", now(), NULL, 'gpsf_product_field_install_control(')"
+            );
+        }
     default:                                                    //-Fall through from above processing ...
         break;
 }

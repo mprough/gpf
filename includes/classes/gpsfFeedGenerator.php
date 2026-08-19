@@ -3,7 +3,7 @@
 // Google Product Search Feeder II, admin tool.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.8
+// Last updated: v1.0.9
 //
 /**
  * Based on:
@@ -528,6 +528,18 @@ class gpsfFeedGenerator
             if ($this->extensions !== null) {
                 $custom_fields = $this->getExtensionsAttributes($products_id, $product, $custom_fields);
             }
+            foreach (
+                [
+                    'products_material' => 'material',
+                    'products_age_group' => 'age_group',
+                    'products_color' => 'color',
+                    'products_gender' => 'gender',
+                ] as $database_field => $feed_field
+            ) {
+                if (!array_key_exists($feed_field, $custom_fields) && !empty($product[$database_field])) {
+                    $custom_fields[$feed_field] = $this->sanitizeXml($product[$database_field]);
+                }
+            }
 
             // -----
             // Set a string version of the identifiers as {xx}[,{xx}]... so that the
@@ -789,6 +801,13 @@ class gpsfFeedGenerator
                 continue;
             }
             $additional_fields .= ', ' . $field_name;
+        }
+
+        foreach (['products_material', 'products_age_group', 'products_color', 'products_gender'] as $next_field) {
+            $field_name = 'p.' . $next_field;
+            if (strpos($additional_fields, $field_name) === false && $sniffer->field_exists(TABLE_PRODUCTS, $next_field)) {
+                $additional_fields .= ', ' . $field_name;
+            }
         }
 
         return [

@@ -3,7 +3,7 @@
 // Google Product Search Feeder II, admin tool.
 // Copyright 2023-2024, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.1
+// Last updated: v1.0.9
 //
 /**
  * Based on:
@@ -52,4 +52,34 @@ function gpsf_cfg_pull_down_country_iso3_list($countries_id, $key = ''): string
         ];
     }
     return zen_draw_pull_down_menu($name, $countries_array, $countries_id);
+}
+
+function gpsf_product_field_install_control($column, $key = ''): string
+{
+    global $sniffer;
+
+    $allowedColumns = [
+        'products_material' => 'material',
+        'products_age_group' => 'age_group',
+        'products_color' => 'color',
+        'products_gender' => 'gender',
+    ];
+    $name = ($key !== '') ? "configuration[$key]" : 'configuration_value';
+    $control = zen_draw_hidden_field($name, $column);
+    if (!isset($allowedColumns[$column])) {
+        return $control . '<span class="text-danger">Invalid field configuration</span>';
+    }
+    if ($sniffer->field_exists(TABLE_PRODUCTS, $column)) {
+        return $control . '<span class="label label-success">Installed</span>';
+    }
+
+    $parameters = http_build_query(
+        [
+            'action' => 'install_product_field',
+            'field' => $allowedColumns[$column],
+            'gID' => (int)($_GET['gID'] ?? 0),
+            'securityToken' => $_SESSION['securityToken'],
+        ]
+    );
+    return $control . '<a class="btn btn-primary btn-sm" href="' . zen_href_link(FILENAME_GPSF_ADMIN, $parameters) . '">Install</a>';
 }
