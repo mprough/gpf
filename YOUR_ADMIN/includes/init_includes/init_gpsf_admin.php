@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.9
+// Last updated: Reimagined Release v1.0.10
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.9');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.10');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -382,35 +382,6 @@ switch (true) {
             );
         }
     case version_compare($installedReimaginedVersion, '1.0.9', '<'):           //-Fall through from above processing ...
-        $configurationSections = [
-            ['GPSF_SECTION_STATUS_SECURITY', '1. Status and security', 'Enable feed generation and protect the generator URL.', 0],
-            ['GPSF_SECTION_RESOURCES', '2. Server resources and large stores', 'Control runtime resources and split very large feeds into smaller runs.', 100],
-            ['GPSF_SECTION_OUTPUT', '3. Feed file and output', 'Choose where and how the feed file is written.', 200],
-            ['GPSF_SECTION_SELECTION', '4. Product selection and exclusions', 'Choose which catalog products are eligible for export.', 300],
-            ['GPSF_SECTION_PRODUCT_DATA', '5. Core product data', 'Control identifiers, availability, condition, product type, titles, and links.', 400],
-            ['GPSF_SECTION_CATEGORY', '6. Google product category', 'Configure the store-wide category fallback and optional per-product category column.', 500],
-            ['GPSF_SECTION_WEIGHT', '7. Weight and shipping weight', 'Configure product_weight and shipping_weight output. These settings do not change Zen Cart shipping calculations.', 600],
-            ['GPSF_SECTION_OPTIONAL_FIELDS', '8. Optional Google product fields', 'Back up the database before installing a field. Install only the product columns this store needs.', 700],
-            ['GPSF_SECTION_CUSTOM_FIELDS', '9. Custom product fields', 'Back up the database before installing a field. Five optional products-table columns can be created and exported.', 800],
-            ['GPSF_SECTION_TAX', '10. Tax', 'Configure the optional US tax data exported in the feed.', 900],
-            ['GPSF_SECTION_SHIPPING', '11. Shipping', 'Export calculated shipping data or leave shipping configured in Google Merchant Center.', 1000],
-            ['GPSF_SECTION_IMAGES', '12. Images', 'Configure primary and additional product image handling.', 1100],
-            ['GPSF_SECTION_DEBUG', '13. Debugging', 'Control skipped-product diagnostics and termination limits.', 1200],
-        ];
-        foreach ($configurationSections as $section) {
-            $sectionExists = $db->Execute(
-                "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = '" . $section[0] . "' LIMIT 1"
-            );
-            if ($sectionExists->EOF) {
-                $db->Execute(
-                    "INSERT INTO " . TABLE_CONFIGURATION . "
-                        (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
-                     VALUES
-                        ('" . $section[1] . "', '" . $section[0] . "', '', '" . $section[2] . "', $cgi, " . (int)$section[3] . ", now(), NULL, 'zen_cfg_read_only(')"
-                );
-            }
-        }
-
         $configurationMetadata = [
             ['GPSF_VERSION', 'Upstream Version', 'Google Product Search Feeder II foundation version. This value is informational and cannot be edited.', 1],
             ['RHS_GPSF_VERSION', 'Reimagined Release', 'Installed Red Headed Stepchild release. This value is informational and cannot be edited.', 2],
@@ -484,6 +455,83 @@ switch (true) {
             $sql = $db->bindVars($sql, ':title:', $setting[1], 'string');
             $sql = $db->bindVars($sql, ':description:', $setting[2], 'string');
             $sql = $db->bindVars($sql, ':sortOrder:', (int)$setting[3], 'integer');
+            $sql = $db->bindVars($sql, ':configurationKey:', $setting[0], 'string');
+            $db->Execute($sql);
+        }
+    case version_compare($installedReimaginedVersion, '1.0.10', '<'):          //-Fall through from above processing ...
+        $db->Execute(
+            "DELETE FROM " . TABLE_CONFIGURATION . "
+              WHERE configuration_key LIKE 'GPSF_SECTION_%'"
+        );
+        $numberedTitles = [
+            ['GPSF_VERSION', '<strong>1. Status and security:</strong> upstream version'],
+            ['RHS_GPSF_VERSION', '1.02 Reimagined release'],
+            ['GPSF_ENABLED', '1.03 Enable feed generation'],
+            ['GPSF_ACCESS_KEY', '1.04 Security key'],
+            ['GPSF_MAX_EXECUTION_TIME', '<strong>2. Server resources and large stores:</strong> maximum execution time'],
+            ['GPSF_MEMORY_LIMIT', '2.02 Memory limit'],
+            ['GPSF_MAX_PRODUCTS', '2.03 Maximum products per feed'],
+            ['GPSF_START_PRODUCTS', '2.04 Starting offset for partial feed'],
+            ['GPSF_DIRECTORY', '<strong>3. Feed file and output:</strong> output directory'],
+            ['GPSF_OUTPUT_FILENAME', '3.02 Feed file prefix'],
+            ['GPSF_OUTPUT_FORMAT', '3.03 Feed output format'],
+            ['GPSF_COMPRESS', '3.04 Compress feed file'],
+            ['GPSF_CURRENCY', '3.05 Feed currency'],
+            ['GPSF_XML_SANITIZATION', '3.06 Advanced XML sanitization'],
+            ['GPSF_SKIP_DUPLICATE_TITLES', '<strong>4. Product selection and exclusions:</strong> skip duplicate product titles'],
+            ['GPSF_POS_CATEGORIES', '4.02 Included category IDs'],
+            ['GPSF_NEG_CATEGORIES', '4.03 Excluded category IDs'],
+            ['GPSF_POS_MANUFACTURERS', '4.04 Included manufacturer IDs'],
+            ['GPSF_NEG_MANUFACTURERS', '4.05 Excluded manufacturer IDs'],
+            ['GPSF_EXPIRATION_BASE', '<strong>5. Core product data:</strong> expiration date base'],
+            ['GPSF_EXPIRATION_DAYS', '5.02 Expiration date adjustment'],
+            ['GPSF_OFFER_ID', '5.03 Offer ID source'],
+            ['GPSF_INCLUDE_MIN_QUANTITY', '5.04 Consider minimum order quantity'],
+            ['GPSF_INCLUDE_OUT_OF_STOCK', '5.05 Include out-of-stock products'],
+            ['GPSF_CONDITION', '5.06 Default product condition'],
+            ['GPSF_PRODUCT_TYPE', '5.07 Product type source'],
+            ['GPSF_DEFAULT_PRODUCT_TYPE', '5.08 Default product type'],
+            ['GPSF_META_TITLE', '5.09 Use product meta title'],
+            ['GPSF_USE_CPATH', '5.10 Include cPath in product links'],
+            ['GPSF_CONVERT_AMPERSANDS', '5.11 Encode ampersands in feed links'],
+            ['GPSF_DEFAULT_PRODUCT_CATEGORY', '<strong>6. Google product category:</strong> default category'],
+            ['GPSF_USE_PRODUCT_CATEGORY_COLUMN', '6.02 Use product category column'],
+            ['GPSF_PRODUCT_CATEGORY_COLUMN', '6.03 Product category column name'],
+            ['GPSF_WEIGHT', '<strong>7. Weight and shipping weight:</strong> export product weight'],
+            ['GPSF_UNITS', '7.02 Weight units'],
+            ['GPSF_DEFAULT_SHIPPING_WEIGHT', '7.03 Default shipping weight'],
+            ['GPSF_SHIPPING_WEIGHT_INCREASE', '7.04 Shipping weight increase percentage'],
+            ['GPSF_PRODUCT_FIELD_MATERIAL', '<strong>8. Optional Google product fields:</strong> material'],
+            ['GPSF_PRODUCT_FIELD_AGE_GROUP', '8.02 Age group product field'],
+            ['GPSF_PRODUCT_FIELD_COLOR', '8.03 Color product field'],
+            ['GPSF_PRODUCT_FIELD_GENDER', '8.04 Gender product field'],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_1', '<strong>9. Custom product fields:</strong> field 1'],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_2', '9.02 Custom product field 2'],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_3', '9.03 Custom product field 3'],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_4', '9.04 Custom product field 4'],
+            ['GPSF_CUSTOM_PRODUCT_FIELD_5', '9.05 Custom product field 5'],
+            ['GPSF_TAX_DISPLAY', '<strong>10. Tax:</strong> export US tax'],
+            ['GPSF_TAX_COUNTRY', '10.02 Tax country'],
+            ['GPSF_TAX_REGION', '10.03 Tax region'],
+            ['GPSF_TAX_SHIPPING', '10.04 Tax shipping charges'],
+            ['GPSF_SHIPPING_METHOD', '<strong>11. Shipping:</strong> data source'],
+            ['GPSF_RATE_ZONE', '11.02 Shipping zone ID'],
+            ['GPSF_SHIPPING_COUNTRY', '11.03 Shipping destination country'],
+            ['GPSF_SHIPPING_REGION', '11.04 Shipping destination region'],
+            ['GPSF_SHIPPING_SERVICE', '11.05 Shipping service name'],
+            ['GPSF_SHIPPING_LABEL', '11.06 Shipping label source'],
+            ['GPSF_ALTERNATE_IMAGE_URL', '<strong>12. Images:</strong> alternate image base URL'],
+            ['GPSF_IMAGE_HANDLER', '12.02 Use Image Handler'],
+            ['GPSF_INCLUDE_ADDITIONAL_IMAGES', '12.03 Include additional images'],
+            ['GPSF_DEBUG', '<strong>13. Debugging:</strong> enable skipped-product diagnostics'],
+            ['GPSF_DEBUG_MAX_SKIPPED', '13.02 Maximum skipped products'],
+        ];
+        foreach ($numberedTitles as $setting) {
+            $sql = "UPDATE " . TABLE_CONFIGURATION . "
+                       SET configuration_title = :title:
+                     WHERE configuration_key = :configurationKey:
+                     LIMIT 1";
+            $sql = $db->bindVars($sql, ':title:', $setting[1], 'string');
             $sql = $db->bindVars($sql, ':configurationKey:', $setting[0], 'string');
             $db->Execute($sql);
         }
