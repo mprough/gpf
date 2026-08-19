@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.10
+// Last updated: Reimagined Release v1.0.11
 //
 /**
  * Based on:
@@ -41,15 +41,15 @@ function gpsf_cfg_pull_down_country_iso3_list($countries_id, $key = ''): string
 
     $name = (($key !== '') ? "configuration[$key]" : 'configuration_value');
     $countries = $db->Execute(
-        'SELECT countries_id, countries_iso_code_3
+        'SELECT countries_id, countries_name, countries_iso_code_3
            FROM ' . TABLE_COUNTRIES . '
-          ORDER BY countries_iso_code_3 ASC'
+          ORDER BY countries_name ASC'
     );
     $countries_array = [];
     foreach ($countries as $next_country) {
         $countries_array[] = [
             'id' => $next_country['countries_id'],
-            'text' => $next_country['countries_iso_code_3'],
+            'text' => $next_country['countries_name'] . ' (' . $next_country['countries_iso_code_3'] . ')',
         ];
     }
     return zen_draw_pull_down_menu($name, $countries_array, $countries_id);
