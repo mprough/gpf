@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.10
+// Last updated: Reimagined Release v1.0.11
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.10');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.11');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -435,8 +435,8 @@ switch (true) {
             ['GPSF_TAX_SHIPPING', 'Tax Shipping Charges', 'Choose y when shipping charges are taxable for the exported tax rule or n when they are not.', 916],
             ['GPSF_SHIPPING_METHOD', 'Shipping Data Source', 'Choose merchant-center when shipping is configured in Google Merchant Center, none to omit shipping data, or a supported Zen Cart shipping method to calculate and export feed shipping.', 1010],
             ['GPSF_RATE_ZONE', 'Shipping Zone ID', 'Zone ID used only with the zones shipping method or a compatible zone-based extension. Leave blank for other methods.', 1012],
-            ['GPSF_SHIPPING_COUNTRY', 'Shipping Destination Country', 'Destination country used to calculate and label exported shipping rates. The list displays ISO three-letter codes; USA is the default.', 1014],
-            ['GPSF_SHIPPING_REGION', 'Shipping Destination Region', 'Optional state, province, or postal-code pattern for the exported shipping rate. Leave blank when the rate applies throughout the selected country.', 1016],
+            ['GPSF_SHIPPING_COUNTRY', 'Shipping Rate Applies to Country', 'Country where the product can be delivered and where the exported shipping rate applies. This setting labels the calculated rate; it does not define the shipping origin or affect the rate calculation. USA is the default.', 1014],
+            ['GPSF_SHIPPING_REGION', 'Shipping Rate Applies to Region', 'Optional state, province, territory, or prefecture where the exported shipping rate applies. Enter an ISO 3166-2 subdivision code without the country prefix, such as GA for Georgia. This setting labels the rate; it does not define the shipping origin or affect the rate calculation. Leave blank when the rate applies throughout the selected country.', 1016],
             ['GPSF_SHIPPING_SERVICE', 'Shipping Service Name', 'Optional customer-facing service name exported with the rate, such as Ground. Leave blank if no service label is needed.', 1018],
             ['GPSF_SHIPPING_LABEL', 'Shipping Label Source', 'Choose products to export products_id or categories to export categories_id as shipping_label for matching product-specific rules in Google Merchant Center.', 1020],
             ['GPSF_ALTERNATE_IMAGE_URL', 'Alternate Image Base URL', 'Optional absolute base URL when product images are hosted elsewhere. Include the trailing slash. The stored product image path is appended to this value.', 1110],
@@ -516,8 +516,8 @@ switch (true) {
             ['GPSF_TAX_SHIPPING', '10.04 Tax shipping charges'],
             ['GPSF_SHIPPING_METHOD', '<strong>11. Shipping:</strong> data source'],
             ['GPSF_RATE_ZONE', '11.02 Shipping zone ID'],
-            ['GPSF_SHIPPING_COUNTRY', '11.03 Shipping destination country'],
-            ['GPSF_SHIPPING_REGION', '11.04 Shipping destination region'],
+            ['GPSF_SHIPPING_COUNTRY', '11.03 Shipping rate applies to country'],
+            ['GPSF_SHIPPING_REGION', '11.04 Shipping rate applies to region'],
             ['GPSF_SHIPPING_SERVICE', '11.05 Shipping service name'],
             ['GPSF_SHIPPING_LABEL', '11.06 Shipping label source'],
             ['GPSF_ALTERNATE_IMAGE_URL', '<strong>12. Images:</strong> alternate image base URL'],
@@ -532,6 +532,30 @@ switch (true) {
                      WHERE configuration_key = :configurationKey:
                      LIMIT 1";
             $sql = $db->bindVars($sql, ':title:', $setting[1], 'string');
+            $sql = $db->bindVars($sql, ':configurationKey:', $setting[0], 'string');
+            $db->Execute($sql);
+        }
+    case version_compare($installedReimaginedVersion, '1.0.11', '<'):          //-Fall through from above processing ...
+        $shippingAreaMetadata = [
+            [
+                'GPSF_SHIPPING_COUNTRY',
+                '11.03 Shipping rate applies to country',
+                'Country where the product can be delivered and where the exported shipping rate applies. The selector shows the country name and Zen Cart three-letter code; the feed exports the required two-letter code. This setting labels the calculated rate; it does not define the shipping origin or affect the rate calculation. USA is the default.',
+            ],
+            [
+                'GPSF_SHIPPING_REGION',
+                '11.04 Shipping rate applies to region',
+                'Optional state, province, territory, or prefecture where the exported shipping rate applies. Enter an ISO 3166-2 subdivision code without the country prefix, such as GA for Georgia. This setting labels the rate; it does not define the shipping origin or affect the rate calculation. Leave blank when the rate applies throughout the selected country.',
+            ],
+        ];
+        foreach ($shippingAreaMetadata as $setting) {
+            $sql = "UPDATE " . TABLE_CONFIGURATION . "
+                       SET configuration_title = :title:,
+                           configuration_description = :description:
+                     WHERE configuration_key = :configurationKey:
+                     LIMIT 1";
+            $sql = $db->bindVars($sql, ':title:', $setting[1], 'string');
+            $sql = $db->bindVars($sql, ':description:', $setting[2], 'string');
             $sql = $db->bindVars($sql, ':configurationKey:', $setting[0], 'string');
             $db->Execute($sql);
         }
