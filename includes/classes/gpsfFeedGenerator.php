@@ -3,7 +3,7 @@
 // Google Product Search Feeder II, admin tool.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.5
+// Last updated: v1.0.6
 //
 /**
  * Based on:
@@ -19,6 +19,174 @@
 use App\Models\PluginControl;
 use App\Models\PluginControlVersion;
 use Zencart\PluginManager\PluginManager;
+
+// -----
+// Provides the subset of XMLWriter's interface used by the feed generator, but
+// stores each item as a tab-delimited record.  Rows are spooled to a temporary
+// stream so large feeds don't need to be held in PHP memory while the complete
+// (including extension-provided) header is discovered.
+//
+class gpsfTextWriter
+{
+    protected $spool;
+    protected $headers = [];
+    protected $headerLookup = [];
+    protected $elementStack = [];
+    protected $currentItem = [];
+    protected $structuredValues = [];
+    protected $inItem = false;
+
+    public function __construct()
+    {
+        $this->spool = tmpfile();
+        if ($this->spool === false) {
+            throw new RuntimeException('Unable to create the temporary TXT-feed spool.');
+        }
+    }
+
+    public function openMemory() { return true; }
+    public function startDocument($version = '1.0', $encoding = null) { return true; }
+    public function setIndent($indent) { return true; }
+    public function writeAttribute($name, $value) { return true; }
+
+    public function startElement($name)
+    {
+        $name = $this->normalizeName($name);
+        $this->elementStack[] = $name;
+        if ($name === 'item') {
+            $this->inItem = true;
+            $this->currentItem = [];
+            $this->structuredValues = [];
+        } elseif ($this->inItem) {
+            $this->structuredValues[] = ['name' => $name, 'values' => [], 'text' => null];
+        }
+        return true;
+    }
+
+    public function writeElement($name, $value = null)
+    {
+        if (!$this->inItem) {
+            return true;
+        }
+        $name = $this->normalizeName($name);
+        if ($this->structuredValues !== []) {
+            $index = count($this->structuredValues) - 1;
+            $this->structuredValues[$index]['values'][$name] = $this->cleanValue($value);
+        } else {
+            $this->addValue($name, $value);
+        }
+        return true;
+    }
+
+    public function writeCData($value)
+    {
+        $name = end($this->elementStack);
+        if ($this->inItem && $name !== false && $this->structuredValues !== []) {
+            $index = count($this->structuredValues) - 1;
+            $this->structuredValues[$index]['text'] = $this->cleanValue($value);
+        }
+        return true;
+    }
+
+    public function endElement()
+    {
+        $name = array_pop($this->elementStack);
+        if ($name === 'item') {
+            fwrite($this->spool, json_encode($this->currentItem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+            $this->currentItem = [];
+            $this->inItem = false;
+        } elseif ($this->inItem && $this->structuredValues !== []) {
+            $index = count($this->structuredValues) - 1;
+            if ($this->structuredValues[$index]['name'] === $name) {
+                $structure = array_pop($this->structuredValues);
+                if ($structure['name'] === 'shipping' && isset($structure['values']['shipping_label'])) {
+                    $this->addValue('shipping_label', $structure['values']['shipping_label']);
+                    unset($structure['values']['shipping_label']);
+                }
+                $value = $this->flattenStructuredValue($structure);
+                if ($this->structuredValues !== []) {
+                    $parent = count($this->structuredValues) - 1;
+                    $this->structuredValues[$parent]['values'][$structure['name']] = $value;
+                } else {
+                    $this->addValue($structure['name'], $value);
+                }
+            }
+        }
+        return true;
+    }
+
+    public function endDocument() { return true; }
+    public function flush($empty = true) { return ''; }
+
+    public function export($fp)
+    {
+        fputcsv($fp, $this->headers, "\t", '"', '');
+        rewind($this->spool);
+        while (($line = fgets($this->spool)) !== false) {
+            $item = json_decode($line, true);
+            $row = [];
+            foreach ($this->headers as $header) {
+                $row[] = $item[$header] ?? '';
+            }
+            fputcsv($fp, $row, "\t", '"', '');
+        }
+        fflush($fp);
+    }
+
+    protected function addValue($name, $value)
+    {
+        $value = $this->cleanValue($value);
+        if (!isset($this->headerLookup[$name])) {
+            $this->headerLookup[$name] = true;
+            $this->headers[] = $name;
+        }
+        if (isset($this->currentItem[$name]) && $this->currentItem[$name] !== '') {
+            $this->currentItem[$name] .= ',' . $value;
+        } else {
+            $this->currentItem[$name] = $value;
+        }
+    }
+
+    protected function normalizeName($name)
+    {
+        return (strpos($name, 'g:') === 0) ? substr($name, 2) : $name;
+    }
+
+    protected function cleanValue($value)
+    {
+        $value = html_entity_decode((string)$value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return trim(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $value) ?? $value);
+    }
+
+    protected function flattenStructuredValue($structure)
+    {
+        if ($structure['values'] === []) {
+            return $structure['text'] ?? '';
+        }
+
+        $fieldOrder = [];
+        if ($structure['name'] === 'shipping') {
+            $fieldOrder = ['country', 'region', 'service', 'price'];
+        } elseif ($structure['name'] === 'tax') {
+            $fieldOrder = ['country', 'region', 'rate', 'tax_ship'];
+        }
+        if ($fieldOrder === []) {
+            return implode(':', $structure['values']);
+        }
+
+        $lastValue = -1;
+        foreach ($fieldOrder as $index => $field) {
+            if (isset($structure['values'][$field]) && $structure['values'][$field] !== '') {
+                $lastValue = $index;
+            }
+        }
+        $values = [];
+        for ($index = 0; $index <= $lastValue; $index++) {
+            $values[] = $structure['values'][$fieldOrder[$index]] ?? '';
+        }
+        return implode(':', $values);
+    }
+}
 
 class gpsfFeedGenerator
 {
@@ -453,7 +621,8 @@ class gpsfFeedGenerator
         // Note: The rss and channel elements, as well as the overall document, are 'ended' via call to
         // the finalizeProductsFeed method.
         //
-        $this->xmlWriter = new XMLWriter();
+        $output_format = defined('GPSF_OUTPUT_FORMAT') ? GPSF_OUTPUT_FORMAT : 'xml';
+        $this->xmlWriter = ($output_format === 'txt') ? new gpsfTextWriter() : new XMLWriter();
         $this->xmlWriter->openMemory();
         $this->xmlWriter->startDocument('1.0', 'UTF-8');
         $this->xmlWriter->setIndent(true);
@@ -1162,8 +1331,12 @@ protected function getCategoryInfo($master_categories_id): array
         // -----
         // Write the remaining in-memory XML elements to the output file.
         //
-        fwrite($this->fp, $this->xmlWriter->flush(true));
-        fflush($this->fp);
+        if ($this->xmlWriter instanceof gpsfTextWriter) {
+            $this->xmlWriter->export($this->fp);
+        } else {
+            fwrite($this->fp, $this->xmlWriter->flush(true));
+            fflush($this->fp);
+        }
 
         unset($this->xmlWriter);
     }

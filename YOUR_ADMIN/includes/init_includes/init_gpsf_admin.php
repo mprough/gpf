@@ -3,13 +3,13 @@
 // An initialization script to install the Google Product Search Feeder II.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.5
+// Last updated: v1.0.6
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
-define('GPSF_CURRENT_VERSION', '1.0.5');
+define('GPSF_CURRENT_VERSION', '1.0.6');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -55,9 +55,11 @@ if (!defined('GPSF_VERSION')) {
 
             ('Output Directory', 'GPSF_DIRECTORY', 'feed/google/', '<br>Set the name of your feed\'s output directory.  Default: <code>feed/google</code><br>', $cgi, 50, now(), NULL, NULL),
 
-            ('Feed File Prefix', 'GPSF_OUTPUT_FILENAME', 'domain', '<br>Identify the first characters used for the filename of the feed\'s output <code>.xml</code> file.  The default (<em>domain</em>) results in feed files named <code>domain_products_*.xml</code>.<br>', $cgi, 52, now(), NULL, NULL),
+            ('Feed File Prefix', 'GPSF_OUTPUT_FILENAME', 'domain', '<br>Identify the first characters used for the feed filename. The default (<em>domain</em>) results in files named <code>domain_products_*.xml</code> or <code>domain_products_*.txt</code>.<br>', $cgi, 52, now(), NULL, NULL),
 
-            ('Compress Feed File', 'GPSF_COMPRESS', 'false', '<br>Compress the feed\'s output .xml file?  Requires the PHP <code>gzip</code> extension to be installed.  Default: <code>false</code>', $cgi, 54, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
+            ('Feed Output Format', 'GPSF_OUTPUT_FORMAT', 'xml', '<br>Generate an XML feed or a tab-delimited TXT feed. Default: <code>xml</code>.', $cgi, 53, now(), NULL, 'zen_cfg_select_option([\'xml\', \'txt\'],'),
+
+            ('Compress Feed File', 'GPSF_COMPRESS', 'false', '<br>Compress the generated feed file? Requires the PHP <code>gzip</code> extension to be installed. Default: <code>false</code>', $cgi, 54, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
             ('Feed Currency', 'GPSF_CURRENCY', 'USD', '<br>Choose the currency to be used for the feed.<br>', $cgi, 100, now(), NULL, 'gpsf_cfg_pull_down_currencies('),
 
@@ -167,6 +169,21 @@ switch (true) {
               WHERE configuration_key = 'GPSF_SHIPPING_METHOD'
               LIMIT 1"
         );
+    case version_compare(GPSF_VERSION, '1.0.6', '<'):           //-Fall through from above processing ...
+        $output_format = $db->Execute(
+            "SELECT configuration_id
+               FROM " . TABLE_CONFIGURATION . "
+              WHERE configuration_key = 'GPSF_OUTPUT_FORMAT'
+              LIMIT 1"
+        );
+        if ($output_format->EOF) {
+            $db->Execute(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                 VALUES
+                    ('Feed Output Format', 'GPSF_OUTPUT_FORMAT', 'xml', '<br>Generate an XML feed or a tab-delimited TXT feed. Default: <code>xml</code>.', $cgi, 53, now(), NULL, 'zen_cfg_select_option([\\'xml\\', \\'txt\\'],')"
+            );
+        }
     default:                                                    //-Fall through from above processing ...
         break;
 }
