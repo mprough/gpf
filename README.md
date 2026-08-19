@@ -1,10 +1,10 @@
 # Zen Cart&reg; Google Product Search Feeder II, v1.0.9
 
-Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This fork updates the Numinix feeder for Zen Cart 1.5.6b and later and has been validated on PHP 7.0 through 8.4.
+Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This fork updates the Numinix feeder for current Zen Cart releases. Version 1.0.9 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
 
 ## Features
 
-- Google RSS/XML and tab-delimited TXT feeds
+- Google RSS/XML or tab-delimited TXT feeds
 - Dynamic TXT columns, including attributes supplied by feed extensions
 - Per-product or store-wide Google product categories
 - Product shipping weight with a configurable packaging increase
@@ -95,6 +95,7 @@ Replace the domain, key, and language with the store's values. Protect the feed 
 
 ### 1.0.9 — 2026-08-19
 
+- Added Zen Cart 2.2.2 and PHP 8.5 compatibility
 - Added independent installation controls for `material`, `age_group`, `color`, and `gender`
 - Added the corresponding products-table columns and Zen Cart admin product-editor inputs
 - Added the installed database values to XML and TXT feeds when populated
