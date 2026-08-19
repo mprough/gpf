@@ -1,12 +1,12 @@
 <?php
 // -----
-// Google Product Search Feeder II.  A one-time tool to copy the older google product
+// Red Headed Stepchild of Zen Cart® Google Product Search Feeder II.  A one-time tool to copy the older google product
 // search configuration settings to this plugin's settings.
 //
 // Copyright (C), 2023-2026.  https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: v1.0.9
+// Last updated: Reimagined Release v1.0.3
 //
 // INSTRUCTIONS:
 // - Copy this file to the root of your site's renamed admin directory.
@@ -19,8 +19,8 @@
 //
 require 'includes/application_top.php';
 
-if (!defined('GPSF_VERSION')) {
-    exit('"Google Product Search Feeder II" must be installed before this script can be successfully run.');
+if (!defined('GPSF_VERSION') || !defined('RHS_GPSF_VERSION')) {
+    exit('"Red Headed Stepchild of Zen Cart® Google Product Search Feeder II" must be installed before this script can be successfully run.');
 }
 
 if (!defined('GOOGLE_PRODUCTS_VERSION')) {
@@ -118,7 +118,7 @@ foreach ($messages as $message) {
 header('Content-Type: text/html; charset=' . CHARSET);
 echo '<!doctype html><html><head><meta charset="' . htmlspecialchars(CHARSET, ENT_QUOTES, CHARSET) . '"><title>GPSF configuration conversion</title></head><body>';
 echo '<h1>GPSF configuration conversion complete</h1>';
-echo '<p>Review the results below, configure the v1.0.6-v1.0.9 settings manually, and delete this script from the admin directory now.</p><ul>';
+echo '<p>Review the results below, configure the Reimagined Release settings manually, and delete this script from the admin directory now.</p><ul>';
 foreach ($messages as $message) {
     echo '<li>' . htmlspecialchars($message, ENT_QUOTES, CHARSET) . '</li>';
 }
