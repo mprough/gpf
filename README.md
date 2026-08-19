@@ -1,33 +1,159 @@
 # Zen Cart&reg; Google Product Search Feeder II, v1.0.9
-An update to the Numinix version, now supporting Zen Carts 1.5.6b and above.  Validated on PHP versions 7.0 through 8.4.
 
-For additional questions and documentation, please see the [GPSF Wiki](https://github.com/lat9/gpsf/wiki).
+Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This fork updates the Numinix feeder for Zen Cart 1.5.6b and later and has been validated on PHP 7.0 through 8.4.
 
-Google API Documentation: https://support.google.com/merchants/answer/6324350?hl=en&ref_topic=6324338&sjid=18306132101193605684-NA
+## Features
 
-Zen Cart Support Thread: https://www.zen-cart.com/showthread.php?229785-Google-Product-Search-Feeder-II-Support-Thread
+- Google RSS/XML and tab-delimited TXT feeds
+- Dynamic TXT columns, including attributes supplied by feed extensions
+- Per-product or store-wide Google product categories
+- Product shipping weight with a configurable packaging increase
+- A configurable default weight for products whose catalog weight is empty or zero
+- Optional database and admin product fields for `material`, `age_group`, `color`, and `gender`
+- Gzip compression, scheduled generation, language selection, and existing GPSF extension support
 
-Zen Cart Plugin Download Link: https://www.zen-cart.com/downloads.php?do=file&id=2379
+## Installation and upgrade
+
+1. Back up the store files and database.
+2. Rename the package's `YOUR_ADMIN` directory to match the store's admin directory.
+3. Upload the package files while preserving their directory structure. Make sure both the catalog-side generator files and admin files are updated.
+4. Sign out of Zen Cart admin, then sign back in. The feeder's non-destructive database upgrade runs during admin initialization.
+5. Open **Configuration > Google Product Search Feeder II** and confirm that the installed version is `1.0.9`.
+
+When upgrading, do not copy only the admin files. Feed generation runs from catalog-side files such as `includes/classes/gpsfFeedGenerator.php`, so an incomplete upload can show the new version in admin while continuing to generate an older feed.
+
+The optional product columns described below are not created automatically during an upgrade. Install only the fields the store needs by using their individual controls in the feeder configuration page.
+
+## Admin locations
+
+- **Configuration > Google Product Search Feeder II** — feeder settings and optional-field installation
+- **Tools > Google Product Search Feeder II** — generate, inspect, and manage feeds
+- **Catalog > Categories/Products** — edit installed per-product Google fields
 
 ## Feed formats
 
-The **Feed Output Format** setting supports the existing Google RSS/XML feed and a
-tab-delimited TXT feed. TXT output uses Google attribute names in the header row,
-keeps extension-provided attributes, and flattens repeated or structured values
-using Google Merchant Center's comma- and colon-delimited text-feed conventions.
+Set **Feed Output Format** to either:
 
-## Product category and shipping weight
+- **XML** — the traditional Google RSS/XML feed
+- **TXT** — a UTF-8, tab-delimited Google product feed with a header row
 
-The feed can read a per-product Google category from a configurable column in the
-products table and fall back to the configured default category when that column
-is empty. The generated `shipping_weight` uses the catalog product weight plus a
-configurable packaging allowance, defaulting to 3%.
-When a product has no positive catalog weight, a configurable default shipping
-weight can be used as the base value.
+TXT generation discovers the attributes actually emitted by the products and writes only columns that contain at least one value. This also preserves attributes added by compatible feeder extensions. Repeated values are comma-delimited, and structured values use colon-delimited subfields in accordance with Google text-feed conventions.
+
+The selected format controls the output filename and compressed filename. For example, a TXT feed is written as `feed/store_products_en.txt`, or `feed/store_products_en.txt.gz` when compression is enabled.
+
+Because TXT headers are dynamic, a field such as `color` is intentionally absent when every generated product has an empty color value.
+
+## Google product category
+
+Category selection uses this precedence:
+
+1. A Google product category already supplied for the product by the feeder's attribute or extension processing
+2. The value in the configured products-table column, when enabled and non-empty
+3. The store-wide default Google product category
+
+To use a database value, enable **Use Product Category Column** and enter the products-table column name in **Product Category Column**. The standard column name is `products_google_product_category`, but another existing products-table column can be entered. If a product has no value in that column, the configured default is used.
+
+## Shipping weight
+
+The feeder chooses a base weight and then applies the packaging increase:
+
+```text
+base weight = positive products_weight, otherwise Default Shipping Weight
+shipping_weight = base weight * (1 + Shipping Weight Increase Percentage / 100)
+```
+
+The percentage defaults to `3`, adding 3% to the selected base weight. The default weight is useful for stores whose products do not have catalog weights. If neither the product weight nor the configured default weight is positive, `shipping_weight` is omitted from that product.
+
+The generated value uses the store's configured weight unit. These settings affect only the Merchant Center feed value; they do not change Zen Cart's checkout or shipping-rate calculations.
 
 ## Optional product fields
 
-Material, age group, color, and gender can be installed independently from the
-feeder configuration page. Each Install control adds its products-table column
-and enables the corresponding entry on the Zen Cart admin product editor. Only
-populated values are added to generated feeds.
+Version 1.0.9 can add four independent fields to the products table and Zen Cart admin product editor. In **Configuration > Google Product Search Feeder II**, click the individual **Install** control for each field the store needs.
+
+| Feed attribute | Products-table column | Database type | Admin input |
+| --- | --- | --- | --- |
+| `material` | `products_material` | `VARCHAR(255)` | Text |
+| `age_group` | `products_age_group` | `VARCHAR(32)` | `newborn`, `infant`, `toddler`, `kids`, or `adult` |
+| `color` | `products_color` | `VARCHAR(255)` | Text |
+| `gender` | `products_gender` | `VARCHAR(16)` | `male`, `female`, or `unisex` |
+
+Each Install action uses a fixed allowlist and an admin security token, and adds only its selected column. It does not remove or overwrite existing product data. Once installed, the field appears on the normal admin product entry/edit page.
+
+Only non-empty values are exported. A value already provided by product attributes or a feeder extension takes precedence over the database field. Stores can therefore install and use only the fields relevant to their inventory.
+
+## Generating a feed
+
+Use **Tools > Google Product Search Feeder II** to generate a feed interactively. Scheduled generation can call the catalog feed endpoint with the configured key and other supported parameters. A typical command is:
+
+```sh
+wget -q -O /dev/null "https://example.com/index.php?main_page=google_product_feed&feed=yes&key=YOUR_KEY&language=en"
+```
+
+Replace the domain, key, and language with the store's values. Protect the feed key as a credential and use HTTPS.
+
+## Version history
+
+### 1.0.9 — 2026-08-19
+
+- Added independent installation controls for `material`, `age_group`, `color`, and `gender`
+- Added the corresponding products-table columns and Zen Cart admin product-editor inputs
+- Added the installed database values to XML and TXT feeds when populated
+- Preserved higher-priority values supplied by product attributes or feed extensions
+
+### 1.0.8
+
+- Added **Default Shipping Weight** for products with no positive catalog weight
+- Applied the configured percentage increase after selecting either the product weight or default weight
+- Omitted `shipping_weight` when no positive base weight exists
+
+### 1.0.7
+
+- Added `shipping_weight` based on product weight plus a configurable percentage increase, defaulting to 3%
+- Added a configurable products-table column for per-product Google product categories
+- Added fallback to the store-wide default category when the product column is empty
+
+### 1.0.6
+
+- Added tab-delimited TXT feed output alongside XML
+- Added dynamic TXT headers and support for extension-provided attributes
+- Added text-feed serialization for repeated and structured values
+- Updated filenames, gzip output, and feed locking for the selected format
+
+### 1.0.5 — 2025-07-23
+
+- Updated Merchant Center shipping-related output
+- Updated availability values to Google's underscore format
+- Improved `shipping_weight` selection and fallback behavior
+- Added warnings for relevant zone configuration issues
+
+### 1.0.4 — 2024-07-19
+
+- Corrected extension-class error handling and title-method processing
+- Added compatibility updates for Zen Cart's plugin infrastructure
+
+### 1.0.3 — 2024-06-21
+
+- Added warnings for missing joined product records instead of allowing silent feed failures
+
+### 1.0.2 — 2024-04-06
+
+- Corrected availability-date processing that could cause a fatal error
+- Corrected category-list handling to use product master categories
+
+### 1.0.1 — 2024-02-29
+
+- Corrected product title, availability, product-type delimiter, language, multibyte text, extension, parameter, timer, and product-type processing
+- Added legacy admin-head compatibility updates
+
+### 1.0.0 — 2023-11-13
+
+- Initial release of the updated Google Product Search Feeder II
+
+## Documentation and support
+
+- [GPSF Wiki](https://github.com/lat9/gpsf/wiki)
+- [Google Merchant Center product data specification](https://support.google.com/merchants/answer/6324350?hl=en&ref_topic=6324338)
+- [Zen Cart support thread](https://www.zen-cart.com/showthread.php?229785-Google-Product-Search-Feeder-II-Support-Thread)
+- [Zen Cart plugin download](https://www.zen-cart.com/downloads.php?do=file&id=2379)
+
+Zen Cart&reg; is a registered trademark of Zen Ventures, LLC. Google and Google Merchant Center are trademarks of Google LLC.
