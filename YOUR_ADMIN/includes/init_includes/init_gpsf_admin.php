@@ -3,13 +3,13 @@
 // An initialization script to install the Google Product Search Feeder II.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.7
+// Last updated: v1.0.8
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
-define('GPSF_CURRENT_VERSION', '1.0.7');
+define('GPSF_CURRENT_VERSION', '1.0.8');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -95,7 +95,9 @@ if (!defined('GPSF_VERSION')) {
 
             ('Weight Units', 'GPSF_UNITS', 'lb', '<br>Choose a unit of weight measure, either pounds (the default) or kilograms.', $cgi, 414, now(), NULL, 'zen_cfg_select_option([\'lb\', \'kg\'],'),
 
-            ('Shipping Weight Increase', 'GPSF_SHIPPING_WEIGHT_INCREASE', '3', '<br>Percentage added to each product\'s catalog weight for <code>shipping_weight</code>. For example, <code>3</code> adds 3%. Default: <code>3</code>.', $cgi, 415, now(), NULL, NULL),
+            ('Default Shipping Weight', 'GPSF_DEFAULT_SHIPPING_WEIGHT', '0', '<br>Base weight used for <code>shipping_weight</code> when a product has no positive catalog weight. Enter the value in the configured Weight Units. Default: <code>0</code> (disabled).', $cgi, 413, now(), NULL, NULL),
+
+            ('Shipping Weight Increase', 'GPSF_SHIPPING_WEIGHT_INCREASE', '3', '<br>Percentage added to the product or default base weight for <code>shipping_weight</code>. For example, <code>3</code> adds 3%. Default: <code>3</code>.', $cgi, 415, now(), NULL, NULL),
 
             ('Use Meta Title', 'GPSF_META_TITLE', 'false', '<br>Use a product\'s meta title (if not empty) as the product\'s feed title?  If set to <em>false</em> (the default), the <code>products_name</code> is used instead.', $cgi, 416, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
@@ -224,6 +226,25 @@ switch (true) {
                     ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br>Products-table column containing each product\'s Google product category. Default: <code>products_google_product_category</code>.', $cgi, 424, now(), NULL, NULL)"
             );
         }
+    case version_compare(GPSF_VERSION, '1.0.8', '<'):           //-Fall through from above processing ...
+        $default_shipping_weight = $db->Execute(
+            "SELECT configuration_id FROM " . TABLE_CONFIGURATION . " WHERE configuration_key = 'GPSF_DEFAULT_SHIPPING_WEIGHT' LIMIT 1"
+        );
+        if ($default_shipping_weight->EOF) {
+            $db->Execute(
+                "INSERT INTO " . TABLE_CONFIGURATION . "
+                    (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
+                 VALUES
+                    ('Default Shipping Weight', 'GPSF_DEFAULT_SHIPPING_WEIGHT', '0', '<br>Base weight used for <code>shipping_weight</code> when a product has no positive catalog weight. Enter the value in the configured Weight Units. Default: <code>0</code> (disabled).', $cgi, 413, now(), NULL, NULL)"
+            );
+        }
+        $db->Execute(
+            "UPDATE " . TABLE_CONFIGURATION . "
+                SET sort_order = 415,
+                    configuration_description = '<br>Percentage added to the product or default base weight for <code>shipping_weight</code>. For example, <code>3</code> adds 3%. Default: <code>3</code>.'
+              WHERE configuration_key = 'GPSF_SHIPPING_WEIGHT_INCREASE'
+              LIMIT 1"
+        );
     default:                                                    //-Fall through from above processing ...
         break;
 }

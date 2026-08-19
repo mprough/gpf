@@ -1,4 +1,4 @@
-# Zen Cart&reg; Google Product Search Feeder II, v1.0.7
+# Zen Cart&reg; Google Product Search Feeder II, v1.0.8
 An update to the Numinix version, now supporting Zen Carts 1.5.6b and above.  Validated on PHP versions 7.0 through 8.4.
 
 For additional questions and documentation, please see the [GPSF Wiki](https://github.com/lat9/gpsf/wiki).
@@ -22,3 +22,5 @@ The feed can read a per-product Google category from a configurable column in th
 products table and fall back to the configured default category when that column
 is empty. The generated `shipping_weight` uses the catalog product weight plus a
 configurable packaging allowance, defaulting to 3%.
+When a product has no positive catalog weight, a configurable default shipping
+weight can be used as the base value.

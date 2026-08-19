@@ -3,7 +3,7 @@
 // Google Product Search Feeder II, admin tool.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.7
+// Last updated: v1.0.8
 //
 /**
  * Based on:
@@ -1035,11 +1035,16 @@ protected function getCategoryInfo($master_categories_id): array
             $this->xmlWriter->writeElement('g:product_weight', $product['products_weight'] . ' ' . GPSF_UNITS);
         }
 
-        // Add a configurable packaging allowance to the feed's shipping weight
+        // Use the product's catalog weight when available, otherwise use the
+        // configured default. Add the packaging allowance to the feed value
         // without changing the weight used by Zen Cart's shipping-rate logic.
-        if ($product['products_weight'] > 0) {
+        $feed_base_weight = (float)$product['products_weight'];
+        if ($feed_base_weight <= 0 && defined('GPSF_DEFAULT_SHIPPING_WEIGHT')) {
+            $feed_base_weight = max(0.0, (float)GPSF_DEFAULT_SHIPPING_WEIGHT);
+        }
+        if ($feed_base_weight > 0) {
             $increase_percentage = defined('GPSF_SHIPPING_WEIGHT_INCREASE') ? max(0.0, (float)GPSF_SHIPPING_WEIGHT_INCREASE) : 3.0;
-            $shipping_weight = (float)$product['products_weight'] * (1 + ($increase_percentage / 100));
+            $shipping_weight = $feed_base_weight * (1 + ($increase_percentage / 100));
             $shipping_weight = rtrim(rtrim(number_format($shipping_weight, 4, '.', ''), '0'), '.');
             $this->xmlWriter->writeElement('g:shipping_weight', $shipping_weight . ' ' . GPSF_UNITS);
         }
