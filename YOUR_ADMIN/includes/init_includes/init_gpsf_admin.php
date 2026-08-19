@@ -21,12 +21,12 @@ if (empty($_SESSION['admin_id']) || (defined('GPSF_VERSION') && GPSF_VERSION ===
     return;
 }
 
-$configurationGroupTitle = 'Red Headed Stepchild of Zen Cart® Google Product Search Feeder II';
-$legacyConfigurationGroupTitle = 'Google Product Search Feeder II';
+$configurationGroupTitle = 'Google Product Search Feeder II';
+$temporaryReimaginedGroupTitle = 'Red Headed Stepchild of Zen Cart® Google Product Search Feeder II';
 $configuration = $db->Execute(
     "SELECT configuration_group_id, configuration_group_title
        FROM " . TABLE_CONFIGURATION_GROUP . "
-      WHERE configuration_group_title IN ('$configurationGroupTitle', '$legacyConfigurationGroupTitle')
+      WHERE configuration_group_title IN ('$configurationGroupTitle', '$temporaryReimaginedGroupTitle')
       ORDER BY configuration_group_title = '$configurationGroupTitle' DESC
       LIMIT 1"
 );
@@ -35,7 +35,7 @@ if ($configuration->EOF) {
         "INSERT INTO " . TABLE_CONFIGURATION_GROUP . " 
             (configuration_group_title, configuration_group_description, sort_order, visible) 
          VALUES 
-            ('$configurationGroupTitle', 'Set Red Headed Stepchild of Zen Cart® Google Product Search Feeder II Options', 1, 1)"
+            ('$configurationGroupTitle', 'Set Google Product Search Feeder II Options', 1, 1)"
     );
     $cgi = $db->Insert_ID(); 
     $db->Execute("UPDATE " . TABLE_CONFIGURATION_GROUP . " SET sort_order = $cgi WHERE configuration_group_id = $cgi LIMIT 1");
@@ -45,7 +45,7 @@ if ($configuration->EOF) {
         $db->Execute(
             "UPDATE " . TABLE_CONFIGURATION_GROUP . "
                 SET configuration_group_title = '$configurationGroupTitle',
-                    configuration_group_description = 'Set Red Headed Stepchild of Zen Cart® Google Product Search Feeder II Options'
+                    configuration_group_description = 'Set Google Product Search Feeder II Options'
               WHERE configuration_group_id = $cgi
               LIMIT 1"
         );
