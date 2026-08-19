@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.5
+// Last updated: Reimagined Release v1.0.6
 //
 /**
  * Based on:
@@ -85,17 +85,17 @@ function gpsf_product_field_install_control($column, $key = ''): string
     return $control . '<a class="btn btn-primary btn-sm" href="' . zen_href_link(FILENAME_GPSF_ADMIN, $parameters) . '">Install</a>';
 }
 
-function gpsf_custom_product_field_install_control($column, $key = ''): string
+function gpsf_custom_product_field_install_control($slot, $column, $key = ''): string
 {
     global $sniffer;
 
-    if (preg_match('/^GPSF_CUSTOM_PRODUCT_FIELD_([1-5])$/', $key, $matches) !== 1) {
+    $slot = (int)$slot;
+    if ($slot < 1 || $slot > 5) {
         return '<span class="text-danger">Invalid custom-field slot</span>';
     }
 
-    $slot = (int)$matches[1];
     $column = trim((string)$column);
-    $name = "configuration[$key]";
+    $name = ($key !== '') ? "configuration[$key]" : 'configuration_value';
     $inputId = 'gpsf-custom-product-field-' . $slot;
     $control = zen_draw_input_field(
         $name,
