@@ -1,4 +1,4 @@
-# Zen Cart&reg; Google Product Search Feeder II, v1.0.6
+# Zen Cart&reg; Google Product Search Feeder II, v1.0.7
 An update to the Numinix version, now supporting Zen Carts 1.5.6b and above.  Validated on PHP versions 7.0 through 8.4.
 
 For additional questions and documentation, please see the [GPSF Wiki](https://github.com/lat9/gpsf/wiki).
@@ -15,3 +15,10 @@ The **Feed Output Format** setting supports the existing Google RSS/XML feed and
 tab-delimited TXT feed. TXT output uses Google attribute names in the header row,
 keeps extension-provided attributes, and flattens repeated or structured values
 using Google Merchant Center's comma- and colon-delimited text-feed conventions.
+
+## Product category and shipping weight
+
+The feed can read a per-product Google category from a configurable column in the
+products table and fall back to the configured default category when that column
+is empty. The generated `shipping_weight` uses the catalog product weight plus a
+configurable packaging allowance, defaulting to 3%.

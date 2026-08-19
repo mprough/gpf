@@ -3,7 +3,7 @@
 // Google Product Search Feeder II, admin tool.
 // Copyright 2023-2025, https://vinosdefrutastropicales.com
 //
-// Last updated: v1.0.6
+// Last updated: v1.0.7
 //
 /**
  * Based on:
@@ -726,6 +726,8 @@ class gpsfFeedGenerator
 
     protected function getAdditionalQueryFields()
     {
+        global $db;
+
         $additional_fields = '';
         $additional_tables = '';
         $additional_where_clause = '';
@@ -737,6 +739,25 @@ class gpsfFeedGenerator
 
         if (GPSF_INCLUDE_MIN_QUANTITY === 'true') {
             $additional_fields .= ', p.products_quantity_order_min';
+        }
+
+        // -----
+        // Optionally retrieve a site-specific Google product-category column from
+        // the products table. Validate the configured SQL identifier and confirm
+        // that the column exists before adding it to the products query.
+        //
+        if (defined('GPSF_USE_PRODUCT_CATEGORY_COLUMN') && GPSF_USE_PRODUCT_CATEGORY_COLUMN === 'true') {
+            $category_column = trim(GPSF_PRODUCT_CATEGORY_COLUMN);
+            if ($category_column !== '' && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $category_column)) {
+                $column_check = $db->Execute("SHOW COLUMNS FROM " . TABLE_PRODUCTS . " LIKE '" . $category_column . "'");
+                if (!$column_check->EOF) {
+                    $additional_fields .= ', p.`' . $category_column . '` AS gpsf_google_product_category';
+                } else {
+                    trigger_error("GPSF product-category column '$category_column' does not exist in " . TABLE_PRODUCTS . '; the configured default category will be used.', E_USER_WARNING);
+                }
+            } elseif ($category_column !== '') {
+                trigger_error("Invalid GPSF product-category column name '$category_column'; the configured default category will be used.", E_USER_WARNING);
+            }
         }
 
         // -----
@@ -1014,11 +1035,16 @@ protected function getCategoryInfo($master_categories_id): array
             $this->xmlWriter->writeElement('g:product_weight', $product['products_weight'] . ' ' . GPSF_UNITS);
         }
 
-        if (GPSF_SHIPPING_METHOD === 'merchant-center') {
-            if ($product['products_weight'] > 0) {
-                $this->xmlWriter->writeElement('g:shipping_weight', $product['products_weight'] . ' ' . GPSF_UNITS);
-            }
-        } elseif (GPSF_SHIPPING_METHOD !== 'none') {
+        // Add a configurable packaging allowance to the feed's shipping weight
+        // without changing the weight used by Zen Cart's shipping-rate logic.
+        if ($product['products_weight'] > 0) {
+            $increase_percentage = defined('GPSF_SHIPPING_WEIGHT_INCREASE') ? max(0.0, (float)GPSF_SHIPPING_WEIGHT_INCREASE) : 3.0;
+            $shipping_weight = (float)$product['products_weight'] * (1 + ($increase_percentage / 100));
+            $shipping_weight = rtrim(rtrim(number_format($shipping_weight, 4, '.', ''), '0'), '.');
+            $this->xmlWriter->writeElement('g:shipping_weight', $shipping_weight . ' ' . GPSF_UNITS);
+        }
+
+        if (GPSF_SHIPPING_METHOD !== 'merchant-center' && GPSF_SHIPPING_METHOD !== 'none') {
             $shipping_rate = $this->getProductsShippingRate($product['products_id'], $product['products_weight'], $price, $product['product_is_always_free_shipping']);
 
             if ((float)$shipping_rate >= 0) {
@@ -1043,9 +1069,6 @@ protected function getCategoryInfo($master_categories_id): array
                 $this->xmlWriter->endElement();  //- END g:shipping
             }
 
-            if (GPSF_WEIGHT === 'true' && $product['products_weight'] > 0) {
-                $this->xmlWriter->writeElement('g:shipping_weight', $product['products_weight'] . ' ' . GPSF_UNITS);
-            }
         }
     }
 
@@ -1207,9 +1230,15 @@ protected function getCategoryInfo($master_categories_id): array
         $this->xmlWriter->writeCData($this->substr(preg_replace('/\s+/', ' ', $products_description), 0, 5000-12));
         $this->xmlWriter->endElement();
 
-        if ($this->defaultGoogleProductCategory !== false && strpos($this->identifiersList, '{google_product_category}') === false) {
+        $google_product_category = false;
+        if (!empty($product['gpsf_google_product_category'])) {
+            $google_product_category = $this->sanitizeXml($product['gpsf_google_product_category']);
+        } elseif ($this->defaultGoogleProductCategory !== false) {
+            $google_product_category = $this->defaultGoogleProductCategory;
+        }
+        if ($google_product_category !== false && strpos($this->identifiersList, '{google_product_category}') === false) {
             $this->xmlWriter->startElement('g:google_product_category');
-            $this->xmlWriter->writeCData($this->defaultGoogleProductCategory);
+            $this->xmlWriter->writeCData($google_product_category);
             $this->xmlWriter->endElement();
         }
     }
