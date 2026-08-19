@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.6
+// Last updated: Reimagined Release v1.0.7
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.6');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.7');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -138,15 +138,15 @@ if (!defined('GPSF_VERSION')) {
 
             ('Gender Product Field', 'GPSF_PRODUCT_FIELD_GENDER', 'products_gender', '<br>Install an optional Gender entry on the admin product page. Populated values are exported as <code>gender</code>.', $cgi, 436, now(), NULL, 'gpsf_product_field_install_control('),
 
-            ('Custom Product Field 1', 'GPSF_CUSTOM_PRODUCT_FIELD_1', '', '<br>Enter a lowercase database and feed column, such as <code>vehicle_type</code>, then click Install. The field appears on the admin product page and populated values are exported under the same name.', $cgi, 440, now(), NULL, 'gpsf_custom_product_field_install_control(1,'),
+            ('Custom Product Field 1', 'GPSF_CUSTOM_PRODUCT_FIELD_1', '', '<br>Enter a lowercase database and feed column name with no spaces, such as <code>vehicle_type</code>, then click Install. The field appears on the admin product page and populated values are exported under the same name.', $cgi, 440, now(), NULL, 'gpsf_custom_product_field_install_control(1,'),
 
-            ('Custom Product Field 2', 'GPSF_CUSTOM_PRODUCT_FIELD_2', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 442, now(), NULL, 'gpsf_custom_product_field_install_control(2,'),
+            ('Custom Product Field 2', 'GPSF_CUSTOM_PRODUCT_FIELD_2', '', '<br>Enter a lowercase database and feed column name with no spaces, then click Install. Leave blank when unused.', $cgi, 442, now(), NULL, 'gpsf_custom_product_field_install_control(2,'),
 
-            ('Custom Product Field 3', 'GPSF_CUSTOM_PRODUCT_FIELD_3', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 444, now(), NULL, 'gpsf_custom_product_field_install_control(3,'),
+            ('Custom Product Field 3', 'GPSF_CUSTOM_PRODUCT_FIELD_3', '', '<br>Enter a lowercase database and feed column name with no spaces, then click Install. Leave blank when unused.', $cgi, 444, now(), NULL, 'gpsf_custom_product_field_install_control(3,'),
 
-            ('Custom Product Field 4', 'GPSF_CUSTOM_PRODUCT_FIELD_4', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 446, now(), NULL, 'gpsf_custom_product_field_install_control(4,'),
+            ('Custom Product Field 4', 'GPSF_CUSTOM_PRODUCT_FIELD_4', '', '<br>Enter a lowercase database and feed column name with no spaces, then click Install. Leave blank when unused.', $cgi, 446, now(), NULL, 'gpsf_custom_product_field_install_control(4,'),
 
-            ('Custom Product Field 5', 'GPSF_CUSTOM_PRODUCT_FIELD_5', '', '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.', $cgi, 448, now(), NULL, 'gpsf_custom_product_field_install_control(5,'),
+            ('Custom Product Field 5', 'GPSF_CUSTOM_PRODUCT_FIELD_5', '', '<br>Enter a lowercase database and feed column name with no spaces, then click Install. Leave blank when unused.', $cgi, 448, now(), NULL, 'gpsf_custom_product_field_install_control(5,'),
 
             ('Display Tax', 'GPSF_TAX_DISPLAY', 'false', '<br>Display tax per product? (US only)? Default: <em>false</em>.', $cgi, 500, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
@@ -339,8 +339,8 @@ switch (true) {
                 continue;
             }
             $description = ($slot === 1)
-                ? '<br>Enter a lowercase database and feed column, such as <code>vehicle_type</code>, then click Install. The field appears on the admin product page and populated values are exported under the same name.'
-                : '<br>Enter a lowercase database and feed column, then click Install. Leave blank when unused.';
+                ? '<br>Enter a lowercase database and feed column name with no spaces, such as <code>vehicle_type</code>, then click Install. The field appears on the admin product page and populated values are exported under the same name.'
+                : '<br>Enter a lowercase database and feed column name with no spaces, then click Install. Leave blank when unused.';
             $db->Execute(
                 "INSERT INTO " . TABLE_CONFIGURATION . "
                     (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
@@ -353,6 +353,18 @@ switch (true) {
             $db->Execute(
                 "UPDATE " . TABLE_CONFIGURATION . "
                     SET set_function = 'gpsf_custom_product_field_install_control($slot,'
+                  WHERE configuration_key = 'GPSF_CUSTOM_PRODUCT_FIELD_$slot'
+                  LIMIT 1"
+            );
+        }
+    case version_compare($installedReimaginedVersion, '1.0.7', '<'):           //-Fall through from above processing ...
+        for ($slot = 1; $slot <= 5; $slot++) {
+            $description = ($slot === 1)
+                ? '<br>Enter a lowercase database and feed column name with no spaces, such as <code>vehicle_type</code>, then click Install. The field appears on the admin product page and populated values are exported under the same name.'
+                : '<br>Enter a lowercase database and feed column name with no spaces, then click Install. Leave blank when unused.';
+            $db->Execute(
+                "UPDATE " . TABLE_CONFIGURATION . "
+                    SET configuration_description = '$description'
                   WHERE configuration_key = 'GPSF_CUSTOM_PRODUCT_FIELD_$slot'
                   LIMIT 1"
             );
