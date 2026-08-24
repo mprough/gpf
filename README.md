@@ -55,7 +55,7 @@ Category selection uses this precedence:
 2. The value in the configured products-table column, when enabled and non-empty
 3. The store-wide default Google product category
 
-To use a database value, enable **Use Product Category Column**. The **Product Category Column** control shows **Install standard column** when `products_google_product_category` is missing and **Installed** when the selected column exists. Click the installer to create the standard column, or enter and save the name of another existing products-table column. The selected installed column appears as **Google Product Category** on the normal admin product entry/edit page. If a product has no value in that column, the configured default is used.
+To use a database value, enable **Use Product Category Column**. The **Product Category Column** control checks specifically for `products_google_product_category`: it shows **Install standard column** when that column is missing and **Installed** when it exists and is selected. Installing the standard column also adds **Google Product Category** to the normal admin product entry/edit page. Alternatively, enter and save the name of another existing products-table column; the feeder uses that custom column but does not add or manage its admin product-entry field. If a product has no value in the selected column, the configured default is used.
 
 ## Shipping weight
 
@@ -125,7 +125,7 @@ Heartbeat data is stored in a hidden status file beside the configured feed outp
 
 - Added one-click installation and installed-status detection for the standard `products_google_product_category` column
 - Retained the option to enter and use another existing products-table column
-- Added the selected installed category column to the normal admin product entry/edit page
+- Added the standard installed category column to the normal admin product entry/edit page without managing user-supplied custom columns
 
 ### Reimagined Release v1.0.12, 2026-08-19
 
