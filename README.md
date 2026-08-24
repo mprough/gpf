@@ -1,6 +1,6 @@
-# Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.12
+# Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.13
 
-Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This independent fork is based on Google Product Search Feeder II v1.0.5 and updates it for current Zen Cart releases. Reimagined Release v1.0.12 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
+Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This independent fork is based on Google Product Search Feeder II v1.0.5 and updates it for current Zen Cart releases. Reimagined Release v1.0.13 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
 
 ## Features
 
@@ -20,7 +20,7 @@ Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Goo
 2. Rename the package's `YOUR_ADMIN` directory to match the store's admin directory.
 3. Upload the package files while preserving their directory structure. Make sure both the catalog-side generator files and admin files are updated.
 4. Sign out of Zen Cart admin, then sign back in. The feeder's non-destructive database upgrade runs during admin initialization.
-5. Open **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** and confirm that the installed Reimagined Release is `1.0.12`.
+5. Open **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** and confirm that the installed Reimagined Release is `1.0.13`.
 
 The database retains the original `Google Product Search Feeder II` configuration-group identity for upgrade and rollback compatibility. The longer Reimagined Release name is supplied by the admin language files.
 
@@ -55,7 +55,7 @@ Category selection uses this precedence:
 2. The value in the configured products-table column, when enabled and non-empty
 3. The store-wide default Google product category
 
-To use a database value, enable **Use Product Category Column** and enter the products-table column name in **Product Category Column**. The standard column name is `products_google_product_category`, but another existing products-table column can be entered. If a product has no value in that column, the configured default is used.
+To use a database value, enable **Use Product Category Column**. The **Product Category Column** control shows **Install standard column** when `products_google_product_category` is missing and **Installed** when the selected column exists. Click the installer to create the standard column, or enter and save the name of another existing products-table column. The selected installed column appears as **Google Product Category** on the normal admin product entry/edit page. If a product has no value in that column, the configured default is used.
 
 ## Shipping weight
 
@@ -121,7 +121,13 @@ Heartbeat data is stored in a hidden status file beside the configured feed outp
 
 ## Version history
 
-### Reimagined Release v1.0.12, 2026-08-19
+### Reimagined Release v1.0.13, 2026-08-24
+
+- Added one-click installation and installed-status detection for the standard `products_google_product_category` column
+- Retained the option to enter and use another existing products-table column
+- Added the selected installed category column to the normal admin product entry/edit page
+
+### Reimagined Release v1.0.13, 2026-08-19
 
 - Clarified that shipping country and region are used only when Shipping Data Source is a calculated Zen Cart shipping method
 - Retained the separate instruction that Shipping Zone ID is used only with the `zones` method
