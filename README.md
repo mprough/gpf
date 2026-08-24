@@ -34,6 +34,8 @@ The optional product columns described below are not created automatically durin
 - **Tools > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II**: generate, inspect, and manage feeds
 - **Catalog > Categories/Products**: edit installed per-product Google fields
 
+For a complete table of every option, default, configuration key, and instruction, see the [Configuration settings reference](docs/configuration-settings.md).
+
 ## Feed formats
 
 Set **Feed Output Format** to either:
