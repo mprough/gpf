@@ -127,7 +127,7 @@ Heartbeat data is stored in a hidden status file beside the configured feed outp
 - Retained the option to enter and use another existing products-table column
 - Added the selected installed category column to the normal admin product entry/edit page
 
-### Reimagined Release v1.0.13, 2026-08-19
+### Reimagined Release v1.0.12, 2026-08-19
 
 - Clarified that shipping country and region are used only when Shipping Data Source is a calculated Zen Cart shipping method
 - Retained the separate instruction that Shipping Zone ID is used only with the `zones` method
