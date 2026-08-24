@@ -4,7 +4,7 @@
 // Copyright 2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.12
+// Last updated: Reimagined Release v1.0.13
 //
 if (!defined('IS_ADMIN_FLAG') || IS_ADMIN_FLAG !== true) {
     die('Illegal Access');
@@ -33,6 +33,16 @@ class zcObserverGpsfProductFields extends base
 
     public function __construct()
     {
+        if (defined('GPSF_PRODUCT_CATEGORY_COLUMN')) {
+            $categoryColumn = trim((string)GPSF_PRODUCT_CATEGORY_COLUMN);
+            if (preg_match('/^[a-z][a-z0-9_]{0,63}$/', $categoryColumn) === 1) {
+                $this->fieldDefinitions[$categoryColumn] = [
+                    'label' => 'Google Product Category',
+                    'maxlength' => 255,
+                ];
+            }
+        }
+
         for ($slot = 1; $slot <= 5; $slot++) {
             $configurationKey = 'GPSF_CUSTOM_PRODUCT_FIELD_' . $slot;
             if (!defined($configurationKey)) {
