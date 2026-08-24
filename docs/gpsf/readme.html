@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.12</title>
+<title>Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.13</title>
 <style>
 a, a:active,
 a:visited {
@@ -72,8 +72,8 @@ img {
 
 <body>
     <h1>Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5)</h1>
-    <h3>Reimagined Release v1.0.12</h3>
-    <p>Reimagined Release v1.0.12 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.</p>
+    <h3>Reimagined Release v1.0.13</h3>
+    <p>Reimagined Release v1.0.13 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.</p>
     <p>Current Support Thread at Zen Cart Forums: <a href="https://www.zen-cart.com/showthread.php?229785-Google-Product-Search-Feeder-II-Support-Thread" target="_blank">https://www.zen-cart.com/showthread.php?229785-Google-Product-Search-Feeder-II-Support-Thread</a></p>
     <p>Zen Cart Download Link: <a href="https://www.zen-cart.com/downloads.php?do=file&id=2379" target="_blank">https://www.zen-cart.com/downloads.php?do=file&id=2379</a></p>
     <p>GitHub repository: <a href="https://github.com/mprough/gpf" target="_blank">https://github.com/mprough/gpf</a></p>
@@ -91,7 +91,7 @@ img {
     </ul>
 
     <h2>Installation and Upgrade</h2>
-    <p><em>GPSF</em><sup>2</sup> is a drop-in plugin for Zen Cart 1.5.6b and later. Reimagined Release v1.0.12 includes compatibility updates for Zen Cart 2.2.2 and PHP 8.5. The installation is simple; follow these steps:</p>
+    <p><em>GPSF</em><sup>2</sup> is a drop-in plugin for Zen Cart 1.5.6b and later. Reimagined Release v1.0.13 includes compatibility updates for Zen Cart 2.2.2 and PHP 8.5. The installation is simple; follow these steps:</p>
     <ol>
         <li><b>Back up the complete store database and files before installing or upgrading. Verify that the backup can be restored.</b></li>
         <li>Unzip this plugin's zip-file; you'll see the following files and directories:<ol type="a">
@@ -135,7 +135,7 @@ img {
     <p>TXT headers are dynamic: only attributes containing at least one value in the generated products are written. For example, <code>color</code> is intentionally absent when all generated products have an empty color value.</p>
 
     <h3>Google product category</h3>
-    <p>Category selection uses this order: a value supplied by product attributes or an extension; the enabled, configured products-table column when non-empty; then the store-wide default Google product category. Enable <b>Use Product Category Column</b> and enter an existing products-table column in <b>Product Category Column</b>. The standard column name is <code>products_google_product_category</code>.</p>
+    <p>Category selection uses this order: a value supplied by product attributes or an extension; the enabled, configured products-table column when non-empty; then the store-wide default Google product category. Enable <b>Use Product Category Column</b>. The <b>Product Category Column</b> control shows <b>Install standard column</b> when <code>products_google_product_category</code> is missing and <b>Installed</b> when the selected column exists. Click the installer to create the standard column, or enter and save another existing products-table column. The selected installed column appears as <b>Google Product Category</b> on the normal admin product entry/edit page.</p>
 
     <h3>Shipping weight</h3>
     <p>A positive catalog product weight is used as the base. When the product has no positive weight, <b>Default Shipping Weight</b> is used. The <b>Shipping Weight Increase</b> percentage is then applied to that base; its default is 3%. If neither base is positive, <code>shipping_weight</code> is omitted. These settings affect the feed only and do not change Zen Cart shipping calculations.</p>
@@ -180,6 +180,11 @@ img {
 
     <h2>Version History</h2>
     <ul>
+        <li>Reimagined Release v1.0.13, 2026-08-24 (mprough)<ul>
+            <li>Added one-click installation and installed-status detection for the standard <code>products_google_product_category</code> column.</li>
+            <li>Retained the option to enter and use another existing products-table column.</li>
+            <li>Added the selected installed category column to the normal admin product entry/edit page.</li>
+        </ul></li>
         <li>Reimagined Release v1.0.12, 2026-08-19 (mprough)<ul>
             <li>Clarified that shipping country and region are used only with a calculated Zen Cart shipping method.</li>
             <li>Retained the separate instruction that Shipping Zone ID is used only with the <code>zones</code> method.</li>
