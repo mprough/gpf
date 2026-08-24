@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.12
+// Last updated: Reimagined Release v1.0.13
 //
 /**
  * Based on:
@@ -83,6 +83,40 @@ function gpsf_product_field_install_control($column, $key = ''): string
         ]
     );
     return $control . '<a class="btn btn-primary btn-sm" href="' . zen_href_link(FILENAME_GPSF_ADMIN, $parameters) . '">Install</a>';
+}
+
+function gpsf_product_category_column_control($column, $key = ''): string
+{
+    global $sniffer;
+
+    $column = trim((string)$column);
+    $name = ($key !== '') ? "configuration[$key]" : 'configuration_value';
+    $inputId = 'gpsf-product-category-column';
+    $control = zen_draw_input_field(
+        $name,
+        $column,
+        'id="' . $inputId . '" maxlength="64" pattern="[a-z][a-z0-9_]{0,63}" placeholder="products_google_product_category"'
+    );
+
+    if ($column !== '' && preg_match('/^[a-z][a-z0-9_]{0,63}$/', $column) === 1 && $sniffer->field_exists(TABLE_PRODUCTS, $column)) {
+        return $control . ' <span class="label label-success">Installed</span>';
+    }
+
+    if ($column !== '' && $column !== 'products_google_product_category') {
+        $control .= ' <span class="label label-warning">Column not found</span>';
+    }
+
+    $parameters = http_build_query(
+        [
+            'action' => 'install_product_field',
+            'field' => 'product_category',
+            'gID' => (int)($_GET['gID'] ?? 0),
+            'securityToken' => $_SESSION['securityToken'],
+        ]
+    );
+    return $control . ' <a class="btn btn-primary btn-sm" href="' .
+        zen_href_link(FILENAME_GPSF_ADMIN, $parameters) .
+        '">Install standard column</a>';
 }
 
 function gpsf_custom_product_field_install_control($slot, $column, $key = ''): string
