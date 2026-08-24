@@ -13,6 +13,10 @@ if (!defined('IS_ADMIN_FLAG') || IS_ADMIN_FLAG !== true) {
 class zcObserverGpsfProductFields extends base
 {
     protected $fieldDefinitions = [
+        'products_google_product_category' => [
+            'label' => 'Google Product Category',
+            'maxlength' => 255,
+        ],
         'products_material' => [
             'label' => 'Google Feed Material',
             'maxlength' => 255,
@@ -33,16 +37,6 @@ class zcObserverGpsfProductFields extends base
 
     public function __construct()
     {
-        if (defined('GPSF_PRODUCT_CATEGORY_COLUMN')) {
-            $categoryColumn = trim((string)GPSF_PRODUCT_CATEGORY_COLUMN);
-            if (preg_match('/^[a-z][a-z0-9_]{0,63}$/', $categoryColumn) === 1) {
-                $this->fieldDefinitions[$categoryColumn] = [
-                    'label' => 'Google Product Category',
-                    'maxlength' => 255,
-                ];
-            }
-        }
-
         for ($slot = 1; $slot <= 5; $slot++) {
             $configurationKey = 'GPSF_CUSTOM_PRODUCT_FIELD_' . $slot;
             if (!defined($configurationKey)) {
