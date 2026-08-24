@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.12
+// Last updated: Reimagined Release v1.0.13
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.12');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.13');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -128,7 +128,7 @@ if (!defined('GPSF_VERSION')) {
 
             ('Use Product Category Column', 'GPSF_USE_PRODUCT_CATEGORY_COLUMN', 'false', '<br>Use a column in the products database table for each product\'s Google product category? If its value is empty, the Google Product Category Default is used.', $cgi, 422, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
-            ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br>Products-table column containing each product\'s Google product category. Default: <code>products_google_product_category</code>.', $cgi, 424, now(), NULL, NULL),
+            ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br><strong>Back up the database before installing.</strong> Click Install standard column to add <code>products_google_product_category</code>, or enter the name of another existing products-table column.', $cgi, 424, now(), NULL, 'gpsf_product_category_column_control('),
 
             ('Material Product Field', 'GPSF_PRODUCT_FIELD_MATERIAL', 'products_material', '<br>Install an optional Material entry on the admin product page. Populated values are exported as <code>material</code>.', $cgi, 430, now(), NULL, 'gpsf_product_field_install_control('),
 
@@ -284,7 +284,7 @@ switch (true) {
                 "INSERT INTO " . TABLE_CONFIGURATION . "
                     (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
                  VALUES
-                    ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br>Products-table column containing each product\'s Google product category. Default: <code>products_google_product_category</code>.', $cgi, 424, now(), NULL, NULL)"
+                    ('Product Category Column', 'GPSF_PRODUCT_CATEGORY_COLUMN', 'products_google_product_category', '<br><strong>Back up the database before installing.</strong> Click Install standard column to add <code>products_google_product_category</code>, or enter the name of another existing products-table column.', $cgi, 424, now(), NULL, 'gpsf_product_category_column_control(')"
             );
         }
     case version_compare($installedReimaginedVersion, '1.0.2', '<'):           //-Fall through from above processing ...
@@ -576,6 +576,15 @@ switch (true) {
     default:                                                    //-Fall through from above processing ...
         break;
 }
+
+$db->Execute(
+    "UPDATE " . TABLE_CONFIGURATION . "
+        SET configuration_title = 'Product Category Column',
+            configuration_description = '<br><strong>Back up the database before installing.</strong> Click Install standard column to add <code>products_google_product_category</code>, or enter the name of another existing products-table column.',
+            set_function = 'gpsf_product_category_column_control('
+      WHERE configuration_key = 'GPSF_PRODUCT_CATEGORY_COLUMN'
+      LIMIT 1"
+);
 
 $db->Execute(
     "UPDATE " . TABLE_CONFIGURATION . "
