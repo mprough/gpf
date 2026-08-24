@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.12
+// Last updated: Reimagined Release v1.0.13
 //
 /**
  * Based on:
@@ -20,6 +20,7 @@ require 'includes/application_top.php';
 
 if (isset($_GET['action']) && $_GET['action'] === 'install_product_field') {
     $fieldDefinitions = [
+        'product_category' => ['column' => 'products_google_product_category', 'sql' => "VARCHAR(255) NOT NULL DEFAULT ''", 'label' => 'Google Product Category'],
         'material' => ['column' => 'products_material', 'sql' => "VARCHAR(255) NOT NULL DEFAULT ''", 'label' => 'Material'],
         'age_group' => ['column' => 'products_age_group', 'sql' => "VARCHAR(32) NOT NULL DEFAULT ''", 'label' => 'Age Group'],
         'color' => ['column' => 'products_color', 'sql' => "VARCHAR(255) NOT NULL DEFAULT ''", 'label' => 'Color'],
@@ -38,6 +39,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'install_product_field') {
                 ' ADD COLUMN `' . $definition['column'] . '` ' . $definition['sql']
             );
             zen_record_admin_activity('Installed Google feed product field ' . $definition['column'] . '.', 'info');
+        }
+        if ($field === 'product_category') {
+            $db->Execute(
+                "UPDATE " . TABLE_CONFIGURATION . "
+                    SET configuration_value = 'products_google_product_category'
+                  WHERE configuration_key = 'GPSF_PRODUCT_CATEGORY_COLUMN'
+                  LIMIT 1"
+            );
         }
         $messageStack->add_session($definition['label'] . ' product field installed.', 'success');
     }
