@@ -89,21 +89,27 @@ function gpsf_product_category_column_control($column, $key = ''): string
 {
     global $sniffer;
 
+    $standardColumn = 'products_google_product_category';
+    $standardExists = $sniffer->field_exists(TABLE_PRODUCTS, $standardColumn);
     $column = trim((string)$column);
     $name = ($key !== '') ? "configuration[$key]" : 'configuration_value';
-    $inputId = 'gpsf-product-category-column';
     $control = zen_draw_input_field(
         $name,
         $column,
-        'id="' . $inputId . '" maxlength="64" pattern="[a-z][a-z0-9_]{0,63}" placeholder="products_google_product_category"'
+        'maxlength="64" pattern="[a-z][a-z0-9_]{0,63}" placeholder="' . $standardColumn . '"'
     );
 
-    if ($column !== '' && preg_match('/^[a-z][a-z0-9_]{0,63}$/', $column) === 1 && $sniffer->field_exists(TABLE_PRODUCTS, $column)) {
+    if ($column === $standardColumn && $standardExists) {
         return $control . ' <span class="label label-success">Installed</span>';
     }
 
-    if ($column !== '' && $column !== 'products_google_product_category') {
-        $control .= ' <span class="label label-warning">Column not found</span>';
+    $columnIsValid = preg_match('/^[a-z][a-z0-9_]{0,63}$/', $column) === 1;
+    if ($column !== '' && $column !== $standardColumn) {
+        if ($columnIsValid && $sniffer->field_exists(TABLE_PRODUCTS, $column)) {
+            $control .= ' <span class="label label-info">Using existing custom column</span>';
+        } else {
+            $control .= ' <span class="label label-warning">Column not found</span>';
+        }
     }
 
     $parameters = http_build_query(
@@ -114,9 +120,11 @@ function gpsf_product_category_column_control($column, $key = ''): string
             'securityToken' => $_SESSION['securityToken'],
         ]
     );
+    $buttonLabel = $standardExists ? 'Use standard column' : 'Install standard column';
+
     return $control . ' <a class="btn btn-primary btn-sm" href="' .
         zen_href_link(FILENAME_GPSF_ADMIN, $parameters) .
-        '">Install standard column</a>';
+        '">' . $buttonLabel . '</a>';
 }
 
 function gpsf_custom_product_field_install_control($slot, $column, $key = ''): string
