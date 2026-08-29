@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.12
+// Last updated: Reimagined Release v1.0.14
 //
 /**
  * Based on:
@@ -763,20 +763,28 @@ class gpsfFeedGenerator
             $where .= ' AND p.products_quantity > 0';
         }
 
-        if (GPSF_NEG_MANUFACTURERS !== '') {
-            $where .= ' AND p.manufacturers_id NOT IN (' . GPSF_NEG_MANUFACTURERS . ')';
+        $negative_manufacturers = $this->getConfiguredIdList(GPSF_NEG_MANUFACTURERS);
+        if ($negative_manufacturers !== '') {
+            $where .= ' AND p.manufacturers_id NOT IN (' . $negative_manufacturers . ')';
         }
 
-        if (GPSF_POS_MANUFACTURERS !== '') {
-            $where .= ' AND p.manufacturers_id IN (' . GPSF_POS_MANUFACTURERS . ')';
+        $positive_manufacturers = $this->getConfiguredIdList(GPSF_POS_MANUFACTURERS);
+        if ($positive_manufacturers !== '') {
+            $where .= ' AND p.manufacturers_id IN (' . $positive_manufacturers . ')';
         }
 
-        if (GPSF_POS_CATEGORIES !== '') {
-            $where .= ' AND p.master_categories_id IN (' . GPSF_POS_CATEGORIES . ')';
+        $positive_categories = $this->getConfiguredIdList(GPSF_POS_CATEGORIES);
+        if ($positive_categories !== '') {
+            $where .= ' AND EXISTS (SELECT 1 FROM ' . TABLE_PRODUCTS_TO_CATEGORIES . ' gpsf_pc_include
+                        WHERE gpsf_pc_include.products_id = p.products_id
+                          AND gpsf_pc_include.categories_id IN (' . $positive_categories . '))';
         }
 
-        if (GPSF_NEG_CATEGORIES !== '') {
-            $where .= ' AND p.master_categories_id NOT IN (' . GPSF_NEG_CATEGORIES . ')';
+        $negative_categories = $this->getConfiguredIdList(GPSF_NEG_CATEGORIES);
+        if ($negative_categories !== '') {
+            $where .= ' AND NOT EXISTS (SELECT 1 FROM ' . TABLE_PRODUCTS_TO_CATEGORIES . ' gpsf_pc_exclude
+                        WHERE gpsf_pc_exclude.products_id = p.products_id
+                          AND gpsf_pc_exclude.categories_id IN (' . $negative_categories . '))';
         }
 
         $order_by = (GPSF_SKIP_DUPLICATE_TITLES === 'true') ? ' ORDER BY pd.products_name ASC, p.products_id ASC' : ' ORDER BY p.products_id ASC';
@@ -789,10 +797,130 @@ class gpsfFeedGenerator
         $this->products = $db->Execute($products_query);
         $this->totalProducts = $this->products->RecordCount();
 
+        if (GPSF_DEBUG === 'true') {
+            $this->diagnoseQueryExclusions($where, $additional_tables, $additional_where_clause);
+        }
+
         // -----
         // Set the feed's default "Google Product Category".
         //
         $this->defaultGoogleProductCategory = (GPSF_DEFAULT_PRODUCT_CATEGORY === '') ? false : $this->sanitizeXml(GPSF_DEFAULT_PRODUCT_CATEGORY);
+    }
+
+    protected function getConfiguredIdList($configured_ids): string
+    {
+        $ids = array_filter(
+            array_map('intval', preg_split('/\s*,\s*/', trim((string)$configured_ids), -1, PREG_SPLIT_NO_EMPTY)),
+            static fn ($id) => $id > 0
+        );
+
+        return implode(',', array_values(array_unique($ids)));
+    }
+
+    // Debug active products rejected before the normal product-processing loop.
+    protected function diagnoseQueryExclusions(string $where, string $additional_tables, string $additional_where_clause): void
+    {
+        global $db;
+
+        $eligible = [];
+        $eligible_result = $db->Execute(
+            'SELECT DISTINCT p.products_id
+               FROM ' . TABLE_PRODUCTS . ' p
+                    LEFT JOIN ' . TABLE_MANUFACTURERS . ' m ON p.manufacturers_id = m.manufacturers_id
+                    INNER JOIN ' . TABLE_PRODUCTS_DESCRIPTION . ' pd
+                        ON p.products_id = pd.products_id AND pd.language_id = ' . (int)$_SESSION['languages_id'] . '
+                    INNER JOIN ' . TABLE_PRODUCT_TYPES . ' pt ON p.products_type = pt.type_id
+                    INNER JOIN ' . TABLE_PRODUCTS_TO_CATEGORIES . ' p2c ON p2c.products_id = p.products_id' .
+                    $additional_tables . $where
+        );
+        foreach ($eligible_result as $row) {
+            $eligible[(int)$row['products_id']] = true;
+        }
+
+        $candidates = $db->Execute(
+            'SELECT p.products_id, p.products_model, p.products_type, p.product_is_call,
+                    p.product_is_free, p.products_image, p.products_quantity,
+                    p.manufacturers_id, p.master_categories_id,
+                    pd.products_id AS has_language_description,
+                    pt.type_id AS has_product_type,
+                    EXISTS (SELECT 1 FROM ' . TABLE_PRODUCTS_TO_CATEGORIES . ' gpsf_pc
+                             WHERE gpsf_pc.products_id = p.products_id) AS has_category_assignment,
+                    pd.products_name
+               FROM ' . TABLE_PRODUCTS . ' p
+                    LEFT JOIN ' . TABLE_PRODUCTS_DESCRIPTION . ' pd
+                        ON p.products_id = pd.products_id AND pd.language_id = ' . (int)$_SESSION['languages_id'] . '
+                    LEFT JOIN ' . TABLE_PRODUCT_TYPES . ' pt ON p.products_type = pt.type_id
+              WHERE p.products_status = 1
+              ORDER BY p.products_id'
+        );
+
+        $positive_manufacturers = array_flip(array_filter(array_map('intval', explode(',', $this->getConfiguredIdList(GPSF_POS_MANUFACTURERS)))));
+        $negative_manufacturers = array_flip(array_filter(array_map('intval', explode(',', $this->getConfiguredIdList(GPSF_NEG_MANUFACTURERS)))));
+        $positive_categories = $this->getConfiguredIdList(GPSF_POS_CATEGORIES);
+        $negative_categories = $this->getConfiguredIdList(GPSF_NEG_CATEGORIES);
+
+        foreach ($candidates as $product) {
+            $products_id = (int)$product['products_id'];
+            if (isset($eligible[$products_id])) {
+                continue;
+            }
+
+            if ((int)$product['has_language_description'] === 0) {
+                $reason = 'missing product name/description for feed language ' . (int)$_SESSION['languages_id'];
+            } elseif ((int)$product['has_product_type'] === 0) {
+                $reason = 'products_type has no matching product-type record';
+            } elseif ((int)$product['has_category_assignment'] === 0) {
+                $reason = 'no products_to_categories assignment';
+            } elseif ((int)$product['products_type'] === 3) {
+                $reason = 'Document General product type';
+            } elseif ((int)$product['product_is_call'] === 1) {
+                $reason = 'Call for Price product';
+            } elseif ((int)$product['product_is_free'] === 1) {
+                $reason = 'free product';
+            } elseif ($product['products_image'] === null || $product['products_image'] === '' || $product['products_image'] === PRODUCTS_IMAGE_NO_IMAGE) {
+                $reason = 'missing or placeholder catalog image';
+            } elseif (GPSF_INCLUDE_OUT_OF_STOCK === 'false' && (float)$product['products_quantity'] <= 0) {
+                $reason = 'out of stock while Include Out of Stock is false';
+            } elseif ($positive_manufacturers !== [] && !isset($positive_manufacturers[(int)$product['manufacturers_id']])) {
+                $reason = 'manufacturer is not in Included Manufacturer IDs';
+            } elseif (isset($negative_manufacturers[(int)$product['manufacturers_id']])) {
+                $reason = 'manufacturer is in Excluded Manufacturer IDs';
+            } elseif ($positive_categories !== '' && !$this->productHasConfiguredCategory($products_id, $positive_categories)) {
+                $reason = 'no category assignment is in Included Category IDs; master category is ' . (int)$product['master_categories_id'];
+            } elseif ($negative_categories !== '' && $this->productHasConfiguredCategory($products_id, $negative_categories)) {
+                $reason = 'a category assignment is in Excluded Category IDs; master category is ' . (int)$product['master_categories_id'];
+            } else {
+                $extension_condition = trim(preg_replace('/\s+/', ' ', $additional_where_clause));
+                $reason = 'excluded by a site extension additional query condition';
+                if ($extension_condition !== '') {
+                    $reason .= ': ' . $this->substr($extension_condition, 0, 300);
+                }
+            }
+
+            $label = trim((string)$product['products_name']) ?: '(unnamed product)';
+            if (trim((string)$product['products_model']) !== '') {
+                $label .= ' [' . trim((string)$product['products_model']) . ']';
+            }
+            $this->productsSkipped['query-' . $products_id] = $label . ': Initial query exclusion - ' . $reason . '.';
+
+            if (GPSF_DEBUG_MAX_SKIPPED !== '' && count($this->productsSkipped) >= (int)GPSF_DEBUG_MAX_SKIPPED) {
+                $this->productsSkipped['query-diagnostics-max'] = 'Query-exclusion diagnostics stopped at Maximum Skipped Products.';
+                break;
+            }
+        }
+    }
+
+    protected function productHasConfiguredCategory(int $products_id, string $category_ids): bool
+    {
+        global $db;
+
+        $match = $db->Execute(
+            'SELECT 1 FROM ' . TABLE_PRODUCTS_TO_CATEGORIES . '
+              WHERE products_id = ' . $products_id . '
+                AND categories_id IN (' . $category_ids . ') LIMIT 1'
+        );
+
+        return !$match->EOF;
     }
 
     protected function getAdditionalQueryFields()

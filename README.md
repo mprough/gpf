@@ -1,6 +1,6 @@
-# Red Headed Stepchild of Zen Cart&reg; Google Product Search Feeder II (v1.0.5), Reimagined Release v1.0.13
+# Zen Cart&reg; Google Product Search Feeder II (Reimagined), Release v1.0.14
 
-Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Google Merchant Center product feeds from a Zen Cart catalog. This independent fork is based on Google Product Search Feeder II v1.0.5 and updates it for current Zen Cart releases. Reimagined Release v1.0.13 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
+Zen Cart® Google Product Search Feeder II (Reimagined) generates Google Merchant Center product feeds from a Zen Cart catalog. This independent fork is based on Google Product Search Feeder II v1.0.5 and updates it for current Zen Cart releases. Reimagined Release v1.0.14 is compatible with Zen Cart 2.2.2 and PHP 8.5 while retaining support for Zen Cart 1.5.6b and later and PHP 7.0 and later.
 
 ## Features
 
@@ -20,9 +20,9 @@ Red Headed Stepchild of Zen Cart® Google Product Search Feeder II generates Goo
 2. Rename the package's `YOUR_ADMIN` directory to match the store's admin directory.
 3. Upload the package files while preserving their directory structure. Make sure both the catalog-side generator files and admin files are updated.
 4. Sign out of Zen Cart admin, then sign back in. The feeder's non-destructive database upgrade runs during admin initialization.
-5. Open **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** and confirm that the installed Reimagined Release is `1.0.13`.
+5. Open **Configuration > Google Product Feeder** and confirm that the installed Reimagined Release is `1.0.14`.
 
-The database retains the original `Google Product Search Feeder II` configuration-group identity for upgrade and rollback compatibility. The longer Reimagined Release name is supplied by the admin language files.
+The database retains the original `Google Product Search Feeder II` configuration-group identity for upgrade and rollback compatibility. The admin menus use the shorter `Google Product Feeder` label.
 
 When upgrading, do not copy only the admin files. Feed generation runs from catalog-side files such as `includes/classes/gpsfFeedGenerator.php`, so an incomplete upload can show the new version in admin while continuing to generate an older feed.
 
@@ -30,8 +30,8 @@ The optional product columns described below are not created automatically durin
 
 ## Admin locations
 
-- **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II**: feeder settings and optional-field installation
-- **Tools > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II**: generate, inspect, and manage feeds
+- **Configuration > Google Product Feeder**: feeder settings and optional-field installation
+- **Tools > Google Product Feeder**: generate, inspect, and manage feeds
 - **Catalog > Categories/Products**: edit installed per-product Google fields
 
 For a complete table of every option, default, configuration key, and instruction, see the [Configuration settings reference](docs/configuration-settings.md).
@@ -80,7 +80,7 @@ The country selector displays a readable name and Zen Cart three-letter code, su
 
 ## Optional product fields
 
-Reimagined Release v1.0.3 and later can add four independent fields to the products table and Zen Cart admin product editor. In **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II**, click the individual **Install** control for each field the store needs.
+Reimagined Release v1.0.3 and later can add four independent fields to the products table and Zen Cart admin product editor. In **Configuration > Google Product Feeder**, click the individual **Install** control for each field the store needs.
 
 | Feed attribute | Products-table column | Database type | Admin input |
 | --- | --- | --- | --- |
@@ -105,7 +105,7 @@ Uninstalling the feeder also leaves optional and custom products-table columns a
 
 ## Generating a feed
 
-Use **Tools > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** to generate a feed interactively. Scheduled generation can call the catalog feed endpoint with the configured key and other supported parameters. A typical command is:
+Use **Tools > Google Product Feeder** to generate a feed interactively. Scheduled generation can call the catalog feed endpoint with the configured key and other supported parameters. A typical command is:
 
 ```sh
 wget -q -O /dev/null "https://example.com/index.php?main_page=google_product_feed&feed=yes&key=YOUR_KEY&language=en"
@@ -122,6 +122,13 @@ The heartbeat is updated at least every five seconds while products are being pr
 Heartbeat data is stored in a hidden status file beside the configured feed output. Successful and failed runs retain their final status for inspection. Gzip compression is streamed in chunks so a large completed feed is not loaded into PHP memory all at once.
 
 ## Version history
+
+### Reimagined Release v1.0.14, 2026-08-29
+
+- Fixed category filters so they check all actual product-category assignments rather than only `master_categories_id`.
+- Added initial-query exclusion diagnostics for active products that never reach normal feed processing.
+- Normalized category and manufacturer configuration ID lists before adding them to SQL.
+- Shortened the Zen Cart admin menu labels to **Google Product Feeder** and updated the project name.
 
 ### Reimagined Release v1.0.13, 2026-08-24
 
@@ -235,6 +242,6 @@ Heartbeat data is stored in a hidden status file beside the configured feed outp
 
 - Original Google Merchant Center Feeder by Numinix
 - Red Headed Stepchild of Zen Cart® Google Product Search Feeder II update by lat9 and contributors
-- Reimagined Releases v1.0.0-v1.0.12 developed by [PRO-Webs, Inc.](https://PRO-Webs.net), Melanie Prough
+- Reimagined Releases v1.0.0-v1.0.14 developed by [PRO-Webs, Inc.](https://PRO-Webs.net), Melanie Prough
 
 Zen Cart&reg; is a registered trademark of Zen Ventures, LLC. Google and Google Merchant Center are trademarks of Google LLC.

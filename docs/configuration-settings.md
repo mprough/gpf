@@ -1,13 +1,13 @@
 # Configuration settings reference
 
-This reference covers every setting shown under **Configuration > Red Headed Stepchild of Zen Cart® Google Product Search Feeder II** in Reimagined Release v1.0.13.
+This reference covers every setting shown under **Configuration > Google Product Feeder** in Reimagined Release v1.0.14.
 
 ## 1. Status and security
 
 | Setting | Configuration key | Default or choices | Instructions |
 | --- | --- | --- | --- |
 | Upstream version | `GPSF_VERSION` | Read only | Displays the installed Google Product Search Feeder II foundation version. |
-| Reimagined release | `RHS_GPSF_VERSION` | Read only | Displays the installed Red Headed Stepchild Reimagined Release version. |
+| Reimagined release | `RHS_GPSF_VERSION` | Read only | Displays the installed Reimagined Release version. |
 | Enable feed generation | `GPSF_ENABLED` | `false`; true or false | Set to `true` to permit feed generation through the admin launcher or secured generator URL. When false, generation stops before creating a feed file. |
 | Security key | `GPSF_ACCESS_KEY` | Blank | Required secret used in admin and cron generator URLs. Use a long random value containing at least 32 letters and numbers. Keep it private and replace it if exposed. |
 
@@ -36,8 +36,8 @@ This reference covers every setting shown under **Configuration > Red Headed Ste
 | Setting | Configuration key | Default or choices | Instructions |
 | --- | --- | --- | --- |
 | Skip duplicate product titles | `GPSF_SKIP_DUPLICATE_TITLES` | `true`; true or false | When true, only the first eligible product is exported when multiple products have the same title. Google US requires unique titles. Review debugging output when distinct products share a name. |
-| Included category IDs | `GPSF_POS_CATEGORIES` | Blank | Comma-separated `categories_id` values. When supplied, only products in these categories are eligible. Exclusions still take precedence. Leave blank for all categories. |
-| Excluded category IDs | `GPSF_NEG_CATEGORIES` | Blank | Comma-separated `categories_id` values. Matching products are excluded even when they also match the included-category list. |
+| Included category IDs | `GPSF_POS_CATEGORIES` | Blank | Comma-separated `categories_id` values. When supplied, only products assigned to at least one of these categories are eligible. Every `products_to_categories` assignment is checked, not only the master category. Exclusions still take precedence. Leave blank for all categories. |
+| Excluded category IDs | `GPSF_NEG_CATEGORIES` | Blank | Comma-separated `categories_id` values. Products assigned to any matching category are excluded even when they also match the included-category list. Every category assignment is checked, not only the master category. |
 | Included manufacturer IDs | `GPSF_POS_MANUFACTURERS` | Blank | Comma-separated `manufacturers_id` values. When supplied, only products from these manufacturers are eligible. Exclusions still take precedence. |
 | Excluded manufacturer IDs | `GPSF_NEG_MANUFACTURERS` | Blank | Comma-separated `manufacturers_id` values. Matching products are excluded even when they also match the included-manufacturer list. |
 
@@ -155,5 +155,5 @@ Use `none` when shipping is configured entirely in Google Merchant Center.
 
 | Setting | Configuration key | Default or choices | Instructions |
 | --- | --- | --- | --- |
-| Enable skipped-product diagnostics | `GPSF_DEBUG` | `false`; true or false | Set true to report why products were skipped. Use while testing or troubleshooting and review the results before disabling it. |
+| Enable skipped-product diagnostics | `GPSF_DEBUG` | `false`; true or false | Set true to report why products were skipped, including active products rejected by the initial database query. Use while testing or troubleshooting and review the results before disabling it. |
 | Maximum skipped products | `GPSF_DEBUG_MAX_SKIPPED` | `1000` | When debugging is enabled, generation stops after this many skipped products. Leave blank to continue regardless of the skipped count. |

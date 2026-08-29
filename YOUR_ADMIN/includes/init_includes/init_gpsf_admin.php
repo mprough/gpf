@@ -4,14 +4,14 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.13
+// Last updated: Reimagined Release v1.0.14
 //
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
 define('GPSF_CURRENT_VERSION', '1.0.5');
-define('RHS_GPSF_CURRENT_VERSION', '1.0.13');
+define('RHS_GPSF_CURRENT_VERSION', '1.0.14');
 
 // -----
 // Nothing to do if an admin is not currently logged-in or if the plugin's currently installed
@@ -58,7 +58,7 @@ if (!defined('GPSF_VERSION')) {
             (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function) 
          VALUES
             ('Upstream Version', 'GPSF_VERSION', '0.0.0', 'Google Product Search Feeder II foundation:', $cgi, 0, now(), NULL, 'zen_cfg_read_only('),
-            ('Reimagined Release', 'RHS_GPSF_VERSION', '0.0.0', 'Red Headed Stepchild release installed:', $cgi, 1, now(), NULL, 'zen_cfg_read_only('),
+            ('Reimagined Release', 'RHS_GPSF_VERSION', '0.0.0', 'Reimagined Release installed:', $cgi, 1, now(), NULL, 'zen_cfg_read_only('),
 
             ('Enable?', 'GPSF_ENABLED', 'false', '<br>Enable the generation of the feed?', $cgi, 1, now(), NULL, 'zen_cfg_select_option([\'true\', \'false\'],'),
 
@@ -204,7 +204,7 @@ if (!defined('RHS_GPSF_VERSION')) {
         "INSERT INTO " . TABLE_CONFIGURATION . "
             (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added, use_function, set_function)
          VALUES
-            ('Reimagined Release', 'RHS_GPSF_VERSION', '$rhsVersion', 'Red Headed Stepchild release installed:', $cgi, 1, now(), NULL, 'zen_cfg_read_only(')"
+            ('Reimagined Release', 'RHS_GPSF_VERSION', '$rhsVersion', 'Reimagined Release installed:', $cgi, 1, now(), NULL, 'zen_cfg_read_only(')"
     );
     define('RHS_GPSF_VERSION', $rhsVersion);
 }
@@ -384,7 +384,7 @@ switch (true) {
     case version_compare($installedReimaginedVersion, '1.0.9', '<'):           //-Fall through from above processing ...
         $configurationMetadata = [
             ['GPSF_VERSION', 'Upstream Version', 'Google Product Search Feeder II foundation version. This value is informational and cannot be edited.', 1],
-            ['RHS_GPSF_VERSION', 'Reimagined Release', 'Installed Red Headed Stepchild release. This value is informational and cannot be edited.', 2],
+            ['RHS_GPSF_VERSION', 'Reimagined Release', 'Installed Reimagined Release. This value is informational and cannot be edited.', 2],
             ['GPSF_ENABLED', 'Enable Feed Generation', 'Set to true to allow feed generation from the admin launcher or secured generator URL. When false, generation stops before a feed file is created.', 10],
             ['GPSF_ACCESS_KEY', 'Security Key', 'Required secret included in the admin and cron generator URLs. Use a long random value of at least 32 letters and numbers, keep it private, and replace it if exposed.', 12],
             ['GPSF_MAX_EXECUTION_TIME', 'Maximum Execution Time', 'Maximum generator runtime in seconds. Leave blank to use the server default. Some hosts do not allow PHP scripts to override this limit.', 110],
@@ -573,6 +573,8 @@ switch (true) {
             $sql = $db->bindVars($sql, ':configurationKey:', $configurationKey, 'string');
             $db->Execute($sql);
         }
+    case version_compare($installedReimaginedVersion, '1.0.14', '<'):          //-Fall through from above processing ...
+        // Catalog-code and documentation update; no new configuration rows.
     default:                                                    //-Fall through from above processing ...
         break;
 }

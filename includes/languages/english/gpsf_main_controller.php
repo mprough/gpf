@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.12
+// Last updated: Reimagined Release v1.0.14
 //
 /**
  * Based on:
@@ -16,7 +16,7 @@
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: google_product_search_defines.php 5 2011-11-17 11:19:31Z numinix $
  */
-define('TEXT_GPSF_STARTED', 'Red Headed Stepchild of Zen Cart® Google Product Search Feeder II (v1.0.5), Reimagined Release v%s started ' . date('Y/m/d H:i:s'));
+define('TEXT_GPSF_STARTED', 'Zen Cart® Google Product Search Feeder II (Reimagined), Release v%s started ' . date('Y/m/d H:i:s'));
 define('TEXT_GPSF_FILE_LOCATION', 'Feed file - ');
 
 //- %f is the number of seconds the feed took to process

@@ -4,7 +4,7 @@
 // Copyright 2023-2026, https://vinosdefrutastropicales.com
 // Modifications Copyright 2026 PRO-Webs, Inc. (Melanie Prough), https://PRO-Webs.net
 //
-// Last updated: Reimagined Release v1.0.12
+// Last updated: Reimagined Release v1.0.14
 //
 /**
  * Based on
@@ -20,7 +20,7 @@
 require 'includes/application_top.php';
 
 if (!defined('GPSF_ENABLED') || GPSF_ENABLED !== 'true') {
-    die('Red Headed Stepchild of Zen Cart® Google Product Search Feeder II is disabled');
+    die('Zen Cart® Google Product Search Feeder II (Reimagined) is disabled');
 }
 
 // process parameters
@@ -167,7 +167,7 @@ if (isset($_REQUEST['status']) && $_REQUEST['status'] === '1') {
 }
 
 ob_start();
-$reimaginedVersion = defined('RHS_GPSF_VERSION') ? RHS_GPSF_VERSION : '1.0.12';
+$reimaginedVersion = defined('RHS_GPSF_VERSION') ? RHS_GPSF_VERSION : '1.0.14';
 echo '<p>' . sprintf(TEXT_GPSF_STARTED, $reimaginedVersion) . '</p>';
 echo '<p>' . TEXT_GPSF_FILE_LOCATION . $outfile . '</p>';
 echo '<p>Processing: Feed - ' . ($feed === 'yes' ? 'Yes' : 'No') . '</p>';
